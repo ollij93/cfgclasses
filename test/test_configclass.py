@@ -79,7 +79,7 @@ def test_submodes() -> None:
     ) == (TopLevelConfig(debug=True), SubmodeA(anum=10000))
 
     # Check that specifying neither submode fails
-    with pytest.raises(argparse.ArgumentError) as e:
+    with pytest.raises(argparse.ArgumentError):
         TopLevelConfig.parse_args_with_submodes([], submodes)
 
     # Check that specifying both submodes fails

@@ -7,8 +7,8 @@ import pytest
 
 from configclasses import (
     ConfigClass,
-    mutually_exclusive_group,
     choicesfield,
+    mutually_exclusive_group,
     optionalfield,
     simplefield,
     store_truefield,
@@ -59,7 +59,9 @@ optionaloptgroup = ArgGroup(
 class ChoicesOptCase(ConfigClass):
     """Case with a choices option."""
 
-    choicefield: str = choicesfield("A choice field", choices=["a", "b", "c"], default="a")
+    choicefield: str = choicesfield(
+        "A choice field", choices=["a", "b", "c"], default="a"
+    )
 
 
 choicesoptgroup = ArgGroup(
