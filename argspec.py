@@ -12,9 +12,6 @@ class ArgSpecNotSpecified:
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, ArgSpecNotSpecified)
 
-    def __hash__(self) -> int:
-        return 0
-
 
 NotSpecified = ArgSpecNotSpecified()
 
@@ -55,7 +52,7 @@ class ArgOpts:
         return {
             k: v
             for k, v in dataclasses.asdict(self).items()
-            if v != NotSpecified and k != "name"
+            if v != NotSpecified
         }
 
     @staticmethod
@@ -70,7 +67,7 @@ class ArgOpts:
         elif get_origin(field.type) == Union:
             type_args = get_args(field.type)
             # For `Optional[type]` just set required=False and specify the type
-            if len(type_args) == 2 and None in type_args:
+            if len(type_args) == 2 and type(None) in type_args:
                 opts.type = [a for a in type_args if a is not None][0]
                 opts.required = False
             # No other Union types are currently supported
@@ -168,7 +165,12 @@ class ArgGroup:
         """Instantiate an instance of this class from the ConfigGroup class"""
         group = ArgGroup(is_mutually_exclusive=is_mutually_exclusive)
         for field in dataclasses.fields(configcls):
-            if issubclass(field.type, ConfigGroup):
+            try:
+                isconfigcls = issubclass(field.type, ConfigGroup)
+            except TypeError:
+                isconfigcls = False
+
+            if isconfigcls:
                 group.subgroups.append(
                     ArgSubGroup(
                         field.name,
@@ -201,7 +203,10 @@ class ArgGroup:
     ) -> dict[str, Any]:
         """Extract arguments from an argparse.Namespace."""
         return {
-            spec.name: getattr(namespace, spec.name) for spec in self.members
+            spec.name.replace("-", "_"): getattr(
+                namespace, spec.name.replace("-", "_")
+            )
+            for spec in self.members
         } | {
             subgroup.name: subgroup.type(
                 **subgroup.group.extract_args_from_namespace(namespace)

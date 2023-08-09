@@ -6,7 +6,7 @@
         {
             "label": "pytest",
             "type": "shell",
-            "command": "source venv/bin/activate; coverage run -m pytest; coverage xml; coverage report -m",
+            "command": "bash -c 'source venv/bin/activate && bin/run_tests.sh -vv'",
             "problemMatcher": [],
             "group": {
                 "kind": "test",

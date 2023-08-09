@@ -1,10 +1,16 @@
 """Unit-tests for the configclass module."""
+import argparse
 import dataclasses
 
 import pytest
 
-from ..configclass import ConfigClass, ConfigSubmode
-from ..fieldtypes import mutually_exclusive_group, simplefield, store_truefield
+from configclasses import (
+    ConfigClass,
+    ConfigSubmode,
+    mutually_exclusive_group,
+    simplefield,
+    store_truefield,
+)
 
 
 def test_mutually_exclusive() -> None:
@@ -73,8 +79,8 @@ def test_submodes() -> None:
     ) == (TopLevelConfig(debug=True), SubmodeA(anum=10000))
 
     # Check that specifying neither submode fails
-    with pytest.raises(SystemExit):
-        TopLevelConfig.parse_args_with_submodes(["--anum", "10000"], submodes)
+    with pytest.raises(argparse.ArgumentError) as e:
+        TopLevelConfig.parse_args_with_submodes([], submodes)
 
     # Check that specifying both submodes fails
     with pytest.raises(SystemExit):
