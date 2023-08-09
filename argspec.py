@@ -13,11 +13,8 @@ class ArgSpecNotSpecified:
         return isinstance(other, ArgSpecNotSpecified)
 
 
-NotSpecified = ArgSpecNotSpecified()
-
-
 def _argspec_optional() -> Any:
-    return dataclasses.field(default=NotSpecified)
+    return dataclasses.field(default_factory=ArgSpecNotSpecified)
 
 
 @dataclasses.dataclass
@@ -52,7 +49,7 @@ class ArgOpts:
         return {
             k: v
             for k, v in dataclasses.asdict(self).items()
-            if v != NotSpecified
+            if not isinstance(v, ArgSpecNotSpecified)
         }
 
     @staticmethod
@@ -82,8 +79,8 @@ class ArgOpts:
         else:
             opts.required = True
 
-        opts.metavar = field.metadata.get("metavar", NotSpecified)
-        opts.choices = field.metadata.get("choices", NotSpecified)
+        opts.metavar = field.metadata.get("metavar", ArgSpecNotSpecified())
+        opts.choices = field.metadata.get("choices", ArgSpecNotSpecified())
 
         return opts
 
