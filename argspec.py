@@ -43,6 +43,7 @@ class ArgOpts:
     choices: Iterable[Any] | ArgSpecNotSpecified = _argspec_optional()
     action: str | ArgSpecNotSpecified = _argspec_optional()
     type: Type[Any] | ArgSpecNotSpecified = _argspec_optional()
+    nargs: Union[int, str] | ArgSpecNotSpecified = _argspec_optional()
 
     def to_kwargs(self) -> dict[str, Any]:
         """Convert to kwargs for argparse.ArgumentParser.add_argument()"""
@@ -60,6 +61,10 @@ class ArgOpts:
         # allowing flags like `--debug` to be used rather than `--debug True`
         if field.type == bool and field.default is not True:
             opts.action = "store_true"
+        # Handle list types specially using nargs
+        elif get_origin(field.type) == list:
+            opts.nargs = "+"
+            opts.type = get_args(field.type)[0]
         # Handle special Union types - see individual details
         elif get_origin(field.type) == Union:
             type_args = get_args(field.type)
@@ -76,11 +81,21 @@ class ArgOpts:
 
         if field.default is not dataclasses.MISSING:
             opts.default = field.default
+        elif field.default_factory is not dataclasses.MISSING:
+            opts.default = field.default_factory()
         else:
             opts.required = True
 
         opts.metavar = field.metadata.get("metavar", ArgSpecNotSpecified())
         opts.choices = field.metadata.get("choices", ArgSpecNotSpecified())
+        # Allow users to override nargs, e.g. to go from "+" -> "*" if empty
+        # lists are permitted
+        if opts.nargs != ArgSpecNotSpecified():
+            opts.nargs = field.metadata.get("nargs", opts.nargs)
+        elif "nargs" in field.metadata:
+            raise TypeError(
+                f"Can't override nargs for non-list type {field.type}"
+            )
 
         return opts
 
@@ -102,20 +117,30 @@ class ArgSpec:
     name: str
     help: str
     opts: ArgOpts = dataclasses.field(default_factory=ArgOpts)
+    positional: bool = dataclasses.field(default=False)
 
     @staticmethod
     def from_field(field: dataclasses.Field[Any]) -> "ArgSpec":
         """Instantiate an instance of this class from the field definition."""
+        opts = ArgOpts.from_field(field)
+        positional = field.metadata.get("positional", False)
+        if positional:
+            # For positional arguments, its not valid to pass the required flag
+            opts.required = ArgSpecNotSpecified()
+
         return ArgSpec(
             field.name.replace("_", "-"),
             field.metadata.get("help", ""),
-            ArgOpts.from_field(field),
+            opts,
+            positional,
         )
 
     def add_to_parser(self, parser: argparse._ActionsContainer) -> None:
         """Add this argument to the given parser."""
         parser.add_argument(
-            "--" + self.name, help=self.help, **self.opts.to_kwargs()
+            (f"--{self.name}" if not self.positional else self.name),
+            help=self.help,
+            **self.opts.to_kwargs(),
         )
 
 

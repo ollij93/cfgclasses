@@ -6,6 +6,11 @@ from typing import Optional, Sequence, Type, TypeVar
 from .argspec import ArgGroup
 from .configgroup import ConfigGroup
 
+__all__ = (
+    "ConfigClass",
+    "ConfigSubmode",
+)
+
 _T = TypeVar("_T", bound="ConfigClass")
 
 

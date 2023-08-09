@@ -1,6 +1,15 @@
 """Field types module providing helper functions for defining fields."""
 import dataclasses
-from typing import Any, Iterable
+from typing import Any, Iterable, Union
+
+__all__ = (
+    "choicesfield",
+    "mutually_exclusive_group",
+    "optionalfield",
+    "positionalfield",
+    "simplefield",
+    "store_truefield",
+)
 
 
 def simplefield(helpstr: str, *, default: Any = None) -> Any:
@@ -32,6 +41,30 @@ def choicesfield(
         metadata={"help": helpstr, "choices": choices},
         **kwargs,
     )
+
+
+def positionalfield(
+    helpstr: str,
+    *,
+    default: Any = None,
+    default_factory: Any = None,
+    nargs: Union[int, str, None] = None,
+) -> Any:
+    """Setup a simple field with a help string and optionally a default value."""
+    kwargs = {}
+    if default is not None:
+        kwargs["default"] = default
+    if default_factory is not None:
+        kwargs["default_factory"] = default_factory
+    metadata = {"help": helpstr, "positional": True}
+    if nargs is not None:
+        metadata["nargs"] = nargs
+    return dataclasses.field(metadata=metadata, **kwargs)
+
+
+# ==============================================================================
+# Utilities for specifiying subgroups
+# ==============================================================================
 
 
 def mutually_exclusive_group() -> Any:

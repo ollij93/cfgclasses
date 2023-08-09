@@ -10,6 +10,7 @@ from configclasses import (
     choicesfield,
     mutually_exclusive_group,
     optionalfield,
+    positionalfield,
     simplefield,
     store_truefield,
 )
@@ -51,6 +52,81 @@ optionaloptgroup = ArgGroup(
             "An optional string field",
             ArgOpts(default=None, required=False, type=str),
         )
+    ]
+)
+
+
+@dataclasses.dataclass
+class PositionalOptCase(ConfigClass):
+    """Case with a positional option."""
+
+    posfield: str = positionalfield("A positional string field")
+    poslistfield: list[str] = positionalfield("A positional list field")
+
+
+posoptgroup = ArgGroup(
+    members=[
+        ArgSpec(
+            "posfield",
+            "A positional string field",
+            ArgOpts(type=str),
+            positional=True,
+        ),
+        ArgSpec(
+            "poslistfield",
+            "A positional list field",
+            ArgOpts(type=str, nargs="+"),
+            positional=True,
+        ),
+    ]
+)
+
+
+# Additional complex case for positional argument to ensure they interact with
+@dataclasses.dataclass
+class PositionalAndOptionalCase(ConfigClass):
+    """Case with a combination of positional and optional options."""
+
+    strfield: str = simplefield("A simple string field")
+    posfield: str = positionalfield("A positional string field")
+    intfield: int = simplefield("An integer field")
+    optfield: Optional[str] = optionalfield("An optional string field")
+    poslistfield: list[str] = positionalfield(
+        "An optional positional list string field",
+        nargs="*",
+        default_factory=list,
+    )
+
+
+posplusoptgroup = ArgGroup(
+    members=[
+        ArgSpec(
+            "strfield",
+            "A simple string field",
+            ArgOpts(required=True, type=str),
+        ),
+        ArgSpec(
+            "posfield",
+            "A positional string field",
+            ArgOpts(type=str),
+            positional=True,
+        ),
+        ArgSpec(
+            "intfield",
+            "An integer field",
+            ArgOpts(required=True, type=int),
+        ),
+        ArgSpec(
+            "optfield",
+            "An optional string field",
+            ArgOpts(default=None, required=False, type=str),
+        ),
+        ArgSpec(
+            "poslistfield",
+            "An optional positional list string field",
+            ArgOpts(type=str, nargs="*", default=[]),
+            positional=True,
+        ),
     ]
 )
 
@@ -143,6 +219,8 @@ hasmutuallyexclusivegroup = ArgGroup(
 test_group_from_class_cases = {
     "SimpleOptCase": (SimpleOptCase, simpleoptgroup),
     "OptionalOptCase": (OptionalOptCase, optionaloptgroup),
+    "PositionalOptCase": (PositionalOptCase, posoptgroup),
+    "PositionalAndOptionalCase": (PositionalAndOptionalCase, posplusoptgroup),
     "ChoicesOptCase": (ChoicesOptCase, choicesoptgroup),
     "StoreTrueOptCase": (StoreTrueOptCase, storetrueoptgroup),
     "HasSubGroupCase": (HasSubGroupCase, hassubgroup),
@@ -208,6 +286,46 @@ test_e2e_parser_cases = {
         optionaloptgroup,
         [],
         {"optfield": None},
+    ),
+    # =========================================================================
+    # Positional tests
+    "positional": (
+        posoptgroup,
+        ["a", "B1", "B2"],
+        {"posfield": "a", "poslistfield": ["B1", "B2"]},
+    ),
+    "positional_plus_minimal": (
+        posplusoptgroup,
+        ["a", "--strfield", "test", "--intfield", "100"],
+        {
+            "posfield": "a",
+            "strfield": "test",
+            "intfield": 100,
+            "optfield": None,
+            "poslistfield": [],
+        },
+    ),
+    "positional_plus_complete": (
+        posplusoptgroup,
+        [
+            "--strfield",
+            "test",
+            "--intfield",
+            "100",
+            "--optfield",
+            "test",
+            "a",
+            "X",
+            "Y",
+            "Z",
+        ],
+        {
+            "strfield": "test",
+            "intfield": 100,
+            "optfield": "test",
+            "posfield": "a",
+            "poslistfield": ["X", "Y", "Z"],
+        },
     ),
     # =========================================================================
     # Choices tests
