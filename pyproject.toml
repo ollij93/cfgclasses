@@ -1,6 +1,6 @@
 [project]
 name = "cfgclasses"
-version = "0.0.1-alpha-3"
+version = "1.0.0"
 authors = [
   { name="Olli Johnson", email="ollijohnson93@gmail.com" },
 ]
