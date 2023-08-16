@@ -1,7 +1,16 @@
 """Module for defining the argument specification for a ConfigClass."""
 import argparse
 import dataclasses
-from typing import Any, Iterable, Type, Union, get_args, get_origin
+from typing import (
+    Any,
+    Iterable,
+    Optional,
+    Type,
+    TypeVar,
+    Union,
+    get_args,
+    get_origin,
+)
 
 from .configgroup import ConfigGroup
 
@@ -15,6 +24,9 @@ class ArgSpecNotSpecified:
 
 def _argspec_optional() -> Any:
     return dataclasses.field(default_factory=ArgSpecNotSpecified)
+
+
+_T = TypeVar("_T", bound="ConfigGroup")
 
 
 @dataclasses.dataclass
@@ -235,3 +247,18 @@ class ArgGroup:
             )
             for subgroup in self.subgroups
         }
+
+    def to_configclass(
+        self,
+        cls: Type[_T],
+        namespace: argparse.Namespace,
+        *,
+        userconfig: Optional[dict[str, Any]],
+    ) -> _T:
+        """Convert the argparse.Namespace to a ConfigGroup."""
+        return cls(
+            **(
+                (userconfig or {})
+                | self.extract_args_from_namespace(namespace)
+            )
+        )

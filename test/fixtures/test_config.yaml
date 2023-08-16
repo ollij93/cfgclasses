@@ -1,0 +1,6 @@
+anum: 123
+astr: "test_str"
+alst:
+  - "a"
+  - "b"
+  - "c"

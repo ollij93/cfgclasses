@@ -12,11 +12,15 @@ __all__ = (
 )
 
 
-def simplefield(helpstr: str, *, default: Any = None) -> Any:
+def simplefield(
+    helpstr: str, *, default: Any = None, default_factory: Any = None
+) -> Any:
     """Setup a simple field with a help string and optionally a default value."""
     kwargs = {}
     if default is not None:
         kwargs["default"] = default
+    if default_factory is not None:
+        kwargs["default_factory"] = default_factory
     return dataclasses.field(metadata={"help": helpstr}, **kwargs)
 
 
