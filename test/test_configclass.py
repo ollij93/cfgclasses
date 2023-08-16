@@ -4,7 +4,7 @@ import dataclasses
 
 import pytest
 
-from configclasses import (
+from cfgclasses import (
     ConfigClass,
     ConfigSubmode,
     mutually_exclusive_group,

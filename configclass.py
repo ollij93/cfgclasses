@@ -1,4 +1,4 @@
-"""Primary module of the configclasses package."""
+"""Primary module of the cfgclasses package."""
 import argparse
 import dataclasses
 from typing import Optional, Sequence, Type, TypeVar
@@ -24,7 +24,7 @@ class ConfigSubmode:
 
 @dataclasses.dataclass
 class ConfigClass(ConfigGroup):
-    """Base class to build configclasses from."""
+    """Base class to build cfgclasses from."""
 
     @classmethod
     def parse_args(

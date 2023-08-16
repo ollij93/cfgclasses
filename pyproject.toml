@@ -1,6 +1,6 @@
 [project]
 name = "cfgclasses"
-version = "0.0.1-alpha-2"
+version = "0.0.1-alpha-3"
 authors = [
   { name="Olli Johnson", email="ollijohnson93@gmail.com" },
 ]
@@ -14,8 +14,8 @@ classifiers = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/ollij93/configclasses"
-"Bug Tracker" = "https://github.com/ollij93/configclasses/issues"
+"Homepage" = "https://github.com/ollij93/cfgclasses"
+"Bug Tracker" = "https://github.com/ollij93/cfgclasses/issues"
 
 [build-system]
 requires = ["hatchling"]

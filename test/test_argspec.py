@@ -5,7 +5,7 @@ from typing import Any, Optional, Sequence, Type
 
 import pytest
 
-from configclasses import (
+from cfgclasses import (
     ConfigClass,
     choices,
     mutually_exclusive_group,
@@ -14,7 +14,7 @@ from configclasses import (
     simple,
     store_true,
 )
-from configclasses.argspec import ArgGroup, ArgOpts, ArgSpec, ArgSubGroup
+from cfgclasses.argspec import ArgGroup, ArgOpts, ArgSpec, ArgSubGroup
 
 
 # =============================================================================

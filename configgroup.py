@@ -5,5 +5,5 @@ import dataclasses
 @dataclasses.dataclass
 class ConfigGroup:
     """
-    Class for wrapping a set of config options to build configclasses from.
+    Class for wrapping a set of config options to build cfgclasses from.
     """
