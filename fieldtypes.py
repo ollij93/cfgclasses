@@ -15,10 +15,14 @@ __all__ = (
 def _field(
     helpstr: str,
     metadata: Optional[dict[str, Any]] = None,
+    *,
+    optnames: Optional[Iterable[str]] = None,
     **kwargs: Any,
 ) -> Any:
     if metadata is None:
         metadata = {}
+    if optnames is not None:
+        metadata["optnames"] = optnames
 
     return dataclasses.field(
         metadata=(metadata | {"help": helpstr}),
@@ -31,6 +35,7 @@ def simple(
     *,
     default: Any = dataclasses.MISSING,
     default_factory: Any = dataclasses.MISSING,
+    optnames: Optional[Iterable[str]] = None,
     metadata: Optional[dict[str, Any]] = None,
 ) -> Any:
     """Setup a simple field with a help string and optionally a default value."""
@@ -39,23 +44,28 @@ def simple(
         metadata,
         default=default,
         default_factory=default_factory,
+        optnames=optnames,
     )
 
 
 def store_true(
     helpstr: str,
     *,
+    optnames: Optional[Iterable[str]] = None,
     metadata: Optional[dict[str, Any]] = None,
 ) -> Any:
     """Setup a boolean field that doesn't take a value such a '--debug'."""
-    return _field(helpstr, metadata, default=False)
+    return _field(helpstr, metadata, default=False, optnames=optnames)
 
 
 def optional(
-    helpstr: str, *, metadata: Optional[dict[str, Any]] = None
+    helpstr: str,
+    *,
+    optnames: Optional[Iterable[str]] = None,
+    metadata: Optional[dict[str, Any]] = None,
 ) -> Any:
     """Setup an optional field which defaults to None."""
-    return _field(helpstr, metadata, default=None)
+    return _field(helpstr, metadata, default=None, optnames=optnames)
 
 
 def choices(
@@ -64,6 +74,7 @@ def choices(
     *,
     default: Any = dataclasses.MISSING,
     default_factory: Any = dataclasses.MISSING,
+    optnames: Optional[Iterable[str]] = None,
     metadata: Optional[dict[str, Any]] = None,
 ) -> Any:
     """Setup a choices field with an optional default choice."""
@@ -74,6 +85,7 @@ def choices(
         metadata | {"choices": choices_},
         default=default,
         default_factory=default_factory,
+        optnames=optnames,
     )
 
 

@@ -32,6 +32,7 @@ simpleoptgroup = ArgGroup(
         ArgSpec(
             "strfield",
             "A simple string field",
+            ["--strfield"],
             ArgOpts(required=True, type=str),
         )
     ]
@@ -50,6 +51,7 @@ optionaloptgroup = ArgGroup(
         ArgSpec(
             "optfield",
             "An optional string field",
+            ["--optfield"],
             ArgOpts(default=None, required=False, type=str),
         )
     ]
@@ -69,20 +71,21 @@ posoptgroup = ArgGroup(
         ArgSpec(
             "posfield",
             "A positional string field",
+            ["posfield"],
             ArgOpts(type=str),
-            positional=True,
         ),
         ArgSpec(
             "poslistfield",
             "A positional list field",
+            ["poslistfield"],
             ArgOpts(type=str, nargs="+"),
-            positional=True,
         ),
     ]
 )
 
 
 # Additional complex case for positional argument to ensure they interact with
+# non-positional arguments as expected.
 @dataclasses.dataclass
 class PositionalAndOptionalCase(ConfigClass):
     """Case with a combination of positional and optional options."""
@@ -103,29 +106,32 @@ posplusoptgroup = ArgGroup(
         ArgSpec(
             "strfield",
             "A simple string field",
+            ["--strfield"],
             ArgOpts(required=True, type=str),
         ),
         ArgSpec(
             "posfield",
             "A positional string field",
+            ["posfield"],
             ArgOpts(type=str),
-            positional=True,
         ),
         ArgSpec(
             "intfield",
             "An integer field",
+            ["--intfield"],
             ArgOpts(required=True, type=int),
         ),
         ArgSpec(
             "optfield",
             "An optional string field",
+            ["--optfield"],
             ArgOpts(default=None, required=False, type=str),
         ),
         ArgSpec(
             "poslistfield",
             "An optional positional list string field",
+            ["poslistfield"],
             ArgOpts(type=str, nargs="*", default=[]),
-            positional=True,
         ),
     ]
 )
@@ -143,6 +149,7 @@ choicesoptgroup = ArgGroup(
         ArgSpec(
             "choicefield",
             "A choice field",
+            ["--choicefield"],
             ArgOpts(type=str, choices=["a", "b", "c"], default="a"),
         )
     ]
@@ -161,7 +168,29 @@ storetrueoptgroup = ArgGroup(
         ArgSpec(
             "boolfield",
             "A boolean field",
+            ["--boolfield"],
             ArgOpts(action="store_true", default=False),
+        )
+    ]
+)
+
+
+@dataclasses.dataclass
+class OptNameOptCase(ConfigClass):
+    """Case with a custom option name."""
+
+    strfield: str = simple(
+        "A simple string field", optnames=["-c", "--custom-name"]
+    )
+
+
+optnameoptgroup = ArgGroup(
+    members=[
+        ArgSpec(
+            "strfield",
+            "A simple string field",
+            ["-c", "--custom-name"],
+            ArgOpts(required=True, type=str),
         )
     ]
 )
@@ -202,8 +231,18 @@ hasmutuallyexclusivegroup = ArgGroup(
             ArgGroup(
                 is_mutually_exclusive=True,
                 members=[
-                    ArgSpec("opt-a", "Option A", ArgOpts(type=int, default=0)),
-                    ArgSpec("opt-b", "Option B", ArgOpts(type=int, default=0)),
+                    ArgSpec(
+                        "opt-a",
+                        "Option A",
+                        ["--opt-a"],
+                        ArgOpts(type=int, default=0),
+                    ),
+                    ArgSpec(
+                        "opt-b",
+                        "Option B",
+                        ["--opt-b"],
+                        ArgOpts(type=int, default=0),
+                    ),
                 ],
             ),
         )
@@ -221,6 +260,7 @@ test_group_from_class_cases = {
     "PositionalAndOptionalCase": (PositionalAndOptionalCase, posplusoptgroup),
     "ChoicesOptCase": (ChoicesOptCase, choicesoptgroup),
     "StoreTrueOptCase": (StoreTrueOptCase, storetrueoptgroup),
+    "OptNameOptCase": (OptNameOptCase, optnameoptgroup),
     "HasSubGroupCase": (HasSubGroupCase, hassubgroup),
     "HasMutuallyExclusiveGroupCase": (
         HasMutuallyExclusiveGroupCase,
@@ -343,6 +383,18 @@ test_e2e_parser_cases = {
         storetrueoptgroup,
         [],
         {"boolfield": False},
+    ),
+    # =========================================================================
+    # Custom option name tests
+    "custom_optname": (
+        optnameoptgroup,
+        ["--custom-name", "test"],
+        {"strfield": "test"},
+    ),
+    "custom_optname_short": (
+        optnameoptgroup,
+        ["-c", "test"],
+        {"strfield": "test"},
     ),
     # =========================================================================
     # Subgroup tests

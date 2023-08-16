@@ -110,14 +110,16 @@ class ArgSpec:
         Name of the argument used as "--name" on the command line.
     ..attribute:: help
         Help string for the argument.
+    ..attribute:: optnames
+        List of names (such as -f or --foo) for the argument.
     ..attribute:: opts
         ArgOpts instance containing the options for the argument.
     """
 
     name: str
     help: str
+    optnames: list[str]
     opts: ArgOpts = dataclasses.field(default_factory=ArgOpts)
-    positional: bool = dataclasses.field(default=False)
 
     @staticmethod
     def from_field(field: dataclasses.Field[Any]) -> "ArgSpec":
@@ -128,19 +130,28 @@ class ArgSpec:
             # For positional arguments, its not valid to pass the required flag
             opts.required = ArgSpecNotSpecified()
 
+        name = field.name.replace("_", "-")
+        optnames = (
+            field.metadata.get("optnames", [f"--{name}"])
+            if not positional
+            else [name]
+        )
         return ArgSpec(
-            field.name.replace("_", "-"),
+            name,
             field.metadata.get("help", ""),
+            optnames,
             opts,
-            positional,
         )
 
     def add_to_parser(self, parser: argparse._ActionsContainer) -> None:
         """Add this argument to the given parser."""
+        kwargs: dict[str, Any] = {}
+        if self.optnames != [self.name]:
+            kwargs["dest"] = self.name
         parser.add_argument(
-            (f"--{self.name}" if not self.positional else self.name),
+            *self.optnames,
             help=self.help,
-            **self.opts.to_kwargs(),
+            **(kwargs | self.opts.to_kwargs()),
         )
 
 
@@ -225,9 +236,7 @@ class ArgGroup:
     ) -> dict[str, Any]:
         """Extract arguments from an argparse.Namespace."""
         return {
-            spec.name.replace("-", "_"): getattr(
-                namespace, spec.name.replace("-", "_")
-            )
+            spec.name.replace("-", "_"): getattr(namespace, spec.name)
             for spec in self.members
         } | {
             subgroup.name: subgroup.type(
