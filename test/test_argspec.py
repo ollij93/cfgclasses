@@ -7,12 +7,12 @@ import pytest
 
 from configclasses import (
     ConfigClass,
-    choicesfield,
+    choices,
     mutually_exclusive_group,
-    optionalfield,
-    positionalfield,
-    simplefield,
-    store_truefield,
+    optional,
+    positional,
+    simple,
+    store_true,
 )
 from configclasses.argspec import ArgGroup, ArgOpts, ArgSpec, ArgSubGroup
 
@@ -24,7 +24,7 @@ from configclasses.argspec import ArgGroup, ArgOpts, ArgSpec, ArgSubGroup
 class SimpleOptCase(ConfigClass):
     """Case with a simple required option."""
 
-    strfield: str = simplefield("A simple string field")
+    strfield: str = simple("A simple string field")
 
 
 simpleoptgroup = ArgGroup(
@@ -42,7 +42,7 @@ simpleoptgroup = ArgGroup(
 class OptionalOptCase(ConfigClass):
     """Case with an optional option."""
 
-    optfield: Optional[str] = optionalfield("An optional string field")
+    optfield: Optional[str] = optional("An optional string field")
 
 
 optionaloptgroup = ArgGroup(
@@ -60,8 +60,8 @@ optionaloptgroup = ArgGroup(
 class PositionalOptCase(ConfigClass):
     """Case with a positional option."""
 
-    posfield: str = positionalfield("A positional string field")
-    poslistfield: list[str] = positionalfield("A positional list field")
+    posfield: str = positional("A positional string field")
+    poslistfield: list[str] = positional("A positional list field")
 
 
 posoptgroup = ArgGroup(
@@ -87,11 +87,11 @@ posoptgroup = ArgGroup(
 class PositionalAndOptionalCase(ConfigClass):
     """Case with a combination of positional and optional options."""
 
-    strfield: str = simplefield("A simple string field")
-    posfield: str = positionalfield("A positional string field")
-    intfield: int = simplefield("An integer field")
-    optfield: Optional[str] = optionalfield("An optional string field")
-    poslistfield: list[str] = positionalfield(
+    strfield: str = simple("A simple string field")
+    posfield: str = positional("A positional string field")
+    intfield: int = simple("An integer field")
+    optfield: Optional[str] = optional("An optional string field")
+    poslistfield: list[str] = positional(
         "An optional positional list string field",
         nargs="*",
         default_factory=list,
@@ -135,9 +135,7 @@ posplusoptgroup = ArgGroup(
 class ChoicesOptCase(ConfigClass):
     """Case with a choices option."""
 
-    choicefield: str = choicesfield(
-        "A choice field", choices=["a", "b", "c"], default="a"
-    )
+    choicefield: str = choices("A choice field", ["a", "b", "c"], default="a")
 
 
 choicesoptgroup = ArgGroup(
@@ -155,7 +153,7 @@ choicesoptgroup = ArgGroup(
 class StoreTrueOptCase(ConfigClass):
     """Case with a store_true option."""
 
-    boolfield: bool = store_truefield("A boolean field")
+    boolfield: bool = store_true("A boolean field")
 
 
 storetrueoptgroup = ArgGroup(
@@ -185,8 +183,8 @@ hassubgroup = ArgGroup(
 class MutuallyExclusiveGroup(ConfigClass):
     """Example mutually exclusive group."""
 
-    opt_a: int = simplefield("Option A", default=0)
-    opt_b: int = simplefield("Option B", default=0)
+    opt_a: int = simple("Option A", default=0)
+    opt_b: int = simple("Option B", default=0)
 
 
 @dataclasses.dataclass

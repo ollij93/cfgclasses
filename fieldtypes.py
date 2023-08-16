@@ -1,65 +1,101 @@
 """Field types module providing helper functions for defining fields."""
 import dataclasses
-from typing import Any, Iterable, Union
+from typing import Any, Iterable, Optional, Union
 
 __all__ = (
-    "choicesfield",
+    "choices",
     "mutually_exclusive_group",
-    "optionalfield",
-    "positionalfield",
-    "simplefield",
-    "store_truefield",
+    "optional",
+    "positional",
+    "simple",
+    "store_true",
 )
 
 
-def simplefield(helpstr: str, *, default: Any = None) -> Any:
-    """Setup a simple field with a help string and optionally a default value."""
-    kwargs = {}
-    if default is not None:
-        kwargs["default"] = default
-    return dataclasses.field(metadata={"help": helpstr}, **kwargs)
-
-
-def store_truefield(helpstr: str) -> Any:
-    """Setup a boolean field that doesn't take a value such a '--debug'."""
-    return dataclasses.field(metadata={"help": helpstr}, default=False)
-
-
-def optionalfield(helpstr: str) -> Any:
-    """Setup an optional field which defaults to None."""
-    return dataclasses.field(metadata={"help": helpstr}, default=None)
-
-
-def choicesfield(
-    helpstr: str, choices: Iterable[Any], *, default: Any = None
+def _field(
+    helpstr: str,
+    metadata: Optional[dict[str, Any]] = None,
+    **kwargs: Any,
 ) -> Any:
-    """Setup a choices field with an optional default choice."""
-    kwargs = {}
-    if default is not None:
-        kwargs["default"] = default
+    if metadata is None:
+        metadata = {}
+
     return dataclasses.field(
-        metadata={"help": helpstr, "choices": choices},
+        metadata=(metadata | {"help": helpstr}),
         **kwargs,
     )
 
 
-def positionalfield(
+def simple(
     helpstr: str,
     *,
-    default: Any = None,
-    default_factory: Any = None,
-    nargs: Union[int, str, None] = None,
+    default: Any = dataclasses.MISSING,
+    default_factory: Any = dataclasses.MISSING,
+    metadata: Optional[dict[str, Any]] = None,
 ) -> Any:
     """Setup a simple field with a help string and optionally a default value."""
-    kwargs = {}
-    if default is not None:
-        kwargs["default"] = default
-    if default_factory is not None:
-        kwargs["default_factory"] = default_factory
-    metadata = {"help": helpstr, "positional": True}
+    return _field(
+        helpstr,
+        metadata,
+        default=default,
+        default_factory=default_factory,
+    )
+
+
+def store_true(
+    helpstr: str,
+    *,
+    metadata: Optional[dict[str, Any]] = None,
+) -> Any:
+    """Setup a boolean field that doesn't take a value such a '--debug'."""
+    return _field(helpstr, metadata, default=False)
+
+
+def optional(
+    helpstr: str, *, metadata: Optional[dict[str, Any]] = None
+) -> Any:
+    """Setup an optional field which defaults to None."""
+    return _field(helpstr, metadata, default=None)
+
+
+def choices(
+    helpstr: str,
+    choices_: Iterable[Any],
+    *,
+    default: Any = dataclasses.MISSING,
+    default_factory: Any = dataclasses.MISSING,
+    metadata: Optional[dict[str, Any]] = None,
+) -> Any:
+    """Setup a choices field with an optional default choice."""
+    if metadata is None:
+        metadata = {}
+    return _field(
+        helpstr,
+        metadata | {"choices": choices_},
+        default=default,
+        default_factory=default_factory,
+    )
+
+
+def positional(
+    helpstr: str,
+    *,
+    default: Any = dataclasses.MISSING,
+    default_factory: Any = dataclasses.MISSING,
+    nargs: Union[int, str, None] = None,
+    metadata: Optional[dict[str, Any]] = None,
+) -> Any:
+    """Setup a simple field with a help string and optionally a default value."""
+    if metadata is None:
+        metadata = {}
     if nargs is not None:
         metadata["nargs"] = nargs
-    return dataclasses.field(metadata=metadata, **kwargs)
+    return _field(
+        helpstr,
+        metadata | {"positional": True},
+        default=default,
+        default_factory=default_factory,
+    )
 
 
 # ==============================================================================
