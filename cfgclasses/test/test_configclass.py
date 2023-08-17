@@ -1,5 +1,4 @@
 """Unit-tests for the configclass module."""
-import argparse
 import dataclasses
 
 import pytest
@@ -79,7 +78,7 @@ def test_submodes() -> None:
     ) == (TopLevelConfig(debug=True), SubmodeA(anum=10000))
 
     # Check that specifying neither submode fails
-    with pytest.raises(argparse.ArgumentError):
+    with pytest.raises(SystemExit):
         TopLevelConfig.parse_args_with_submodes([], submodes)
 
     # Check that specifying both submodes fails
@@ -87,3 +86,57 @@ def test_submodes() -> None:
         TopLevelConfig.parse_args_with_submodes(
             ["a", "b", "--anum", "10000", "--bnum", "10000"], submodes
         )
+
+
+def test_validation_simple() -> None:
+    """Test the use of validation functions."""
+
+    @dataclasses.dataclass
+    class ValidationConfig(ConfigClass):
+        """Config for the validation tests."""
+
+        anum: int = simple("A simple integer field")
+
+        def validate(self) -> None:
+            """Validate the config class instance raising a ValueError if invalid."""
+            if self.anum < 0:
+                raise ValueError("anum must be >= 0")
+
+    # Check that validation fails
+    with pytest.raises(SystemExit):
+        ValidationConfig.parse_args(["--anum", "-1"])
+
+    # Check that validation succeeds
+    assert ValidationConfig.parse_args(["--anum", "1"]) == ValidationConfig(
+        anum=1
+    )
+
+
+def test_validation_nested() -> None:
+    """Test the use of validation functions in nested config classes."""
+
+    @dataclasses.dataclass
+    class ValidationConfig(ConfigClass):
+        """Config for the validation tests."""
+
+        anum: int = simple("A simple integer field")
+
+        def validate(self) -> None:
+            """Validate the config class instance raising a ValueError if invalid."""
+            if self.anum < 0:
+                raise ValueError("anum must be >= 0")
+
+    @dataclasses.dataclass
+    class TopLevelConfig(ConfigClass):
+        """Top level config class containing the validation config."""
+
+        validation: ValidationConfig
+
+    # Check that validation fails
+    with pytest.raises(SystemExit):
+        TopLevelConfig.parse_args(["--anum", "-1"])
+
+    # Check that validation succeeds
+    assert TopLevelConfig.parse_args(["--anum", "1"]) == TopLevelConfig(
+        ValidationConfig(anum=1)
+    )

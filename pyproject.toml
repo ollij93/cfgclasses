@@ -1,6 +1,6 @@
 [project]
 name = "cfgclasses"
-version = "1.0.1"
+version = "1.1.0"
 authors = [
   { name="Olli Johnson", email="ollijohnson93@gmail.com" },
 ]
@@ -20,6 +20,11 @@ classifiers = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.build]
+include = [
+  "cfgclasses/**/*.py",
+]
 
 # ==============================================================================
 # DEV TOOLS
@@ -161,6 +166,9 @@ max-nested-blocks = 5
 output-format = "colorized"
 
 [tool.pylint.similarities]
+# Disable the similarity checker due to intentionally duplicated code in the
+# examples.
+min-similarity-lines=-1
 
 [tool.pylint.spelling]
 

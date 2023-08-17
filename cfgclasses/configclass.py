@@ -4,7 +4,7 @@ import dataclasses
 from typing import Optional, Sequence, Type, TypeVar
 
 from .argspec import ArgGroup
-from .configgroup import ConfigGroup
+from .configgroup import ConfigGroup, validate_post_argparse
 
 __all__ = (
     "ConfigClass",
@@ -35,7 +35,26 @@ class ConfigClass(ConfigGroup):
         arggroup = ArgGroup.from_class(cls)
         arggroup.add_to_parser(parser)
         namespace = parser.parse_args(argv)
-        return cls(**arggroup.extract_args_from_namespace(namespace))
+        ret = cls(**arggroup.extract_args_from_namespace(namespace))
+        validate_post_argparse(ret, parser)
+        return ret
+
+    @classmethod
+    def _add_submode_parsers(
+        cls, parser: argparse.ArgumentParser, submodes: list[ConfigSubmode]
+    ) -> dict[str, tuple[ConfigSubmode, ArgGroup]]:
+        """Add the submode parsers to the given argparse parser."""
+        submode_groups = {}
+        subparsers = parser.add_subparsers()
+        for submode in submodes:
+            subparser = subparsers.add_parser(
+                submode.name, help=submode.configcls.__doc__
+            )
+            subparser.set_defaults(submode_name=submode.name)
+            subgroup = ArgGroup.from_class(submode.configcls)
+            subgroup.add_to_parser(subparser)
+            submode_groups[submode.name] = (submode, subgroup)
+        return submode_groups
 
     @classmethod
     def parse_args_with_submodes(
@@ -52,26 +71,19 @@ class ConfigClass(ConfigGroup):
         arggroup = ArgGroup.from_class(cls)
         arggroup.add_to_parser(parser)
 
-        submode_groups = {}
-        subparsers = parser.add_subparsers()
-        for submode in submodes:
-            subparser = subparsers.add_parser(
-                submode.name, help=submode.configcls.__doc__
-            )
-            subparser.set_defaults(submode_name=submode.name)
-            subgroup = ArgGroup.from_class(submode.configcls)
-            subgroup.add_to_parser(subparser)
-            submode_groups[submode.name] = (submode, subgroup)
+        submode_groups = cls._add_submode_parsers(parser, submodes)
 
         namespace = parser.parse_args(argv)
         if submodes and not hasattr(namespace, "submode_name"):
-            raise argparse.ArgumentError(None, "No submode selected")
+            parser.error("No submode selected")
 
         selected_submode, selected_submode_group = submode_groups[
             namespace.submode_name
         ]
-        return (cls(**arggroup.extract_args_from_namespace(namespace))), (
-            selected_submode.configcls(
-                **selected_submode_group.extract_args_from_namespace(namespace)
-            )
+        toplvlcfg = cls(**arggroup.extract_args_from_namespace(namespace))
+        submodecfg: ConfigClass = selected_submode.configcls(
+            **selected_submode_group.extract_args_from_namespace(namespace)
         )
+        validate_post_argparse(toplvlcfg, parser)
+        validate_post_argparse(submodecfg, parser)
+        return toplvlcfg, submodecfg
