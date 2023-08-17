@@ -21,6 +21,11 @@ classifiers = [
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[tool.hatch.build]
+include = [
+  "cfgclasses/**/*.py",
+]
+
 # ==============================================================================
 # DEV TOOLS
 # ==============================================================================
@@ -161,6 +166,9 @@ max-nested-blocks = 5
 output-format = "colorized"
 
 [tool.pylint.similarities]
+# Disable the similarity checker due to intentionally duplicated code in the
+# examples.
+min-similarity-lines=-1
 
 [tool.pylint.spelling]
 
