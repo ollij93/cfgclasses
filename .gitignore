@@ -2,5 +2,6 @@
 .coverage
 coverage.xml
 __pycache__/
+docs/_build/
 dist/
 venv/

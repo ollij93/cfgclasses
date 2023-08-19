@@ -12,6 +12,16 @@
                 "kind": "test",
                 "isDefault": true
             }
-        }
+        },
+        {
+            "label": "sphinx-build",
+            "type": "shell",
+            "command": "bash -c 'source venv/bin/activate && bin/build_docs.sh'",
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
     ]
 }
