@@ -13,6 +13,7 @@ from cfgclasses import (
     positional,
     simple,
     store_true,
+    transform_arg,
 )
 from cfgclasses.argspec import ArgGroup, ArgOpts, ArgSpec, ArgSubGroup
 
@@ -249,6 +250,86 @@ hasmutuallyexclusivegroup = ArgGroup(
     ]
 )
 
+
+@dataclasses.dataclass
+class TransformMembers(ConfigClass):
+    """Example with a member that uses a transform."""
+
+    opt_a: set[str] = transform_arg(
+        "Option A", transform=set, transform_from=list[str]
+    )
+
+
+transformgroup = ArgGroup(
+    members=[
+        ArgSpec(
+            "opt-a",
+            "Option A",
+            ["--opt-a"],
+            ArgOpts(type=str, required=True, nargs="+"),
+            transform=set,
+        )
+    ]
+)
+
+
+@dataclasses.dataclass
+class GroupToTransform(ConfigClass):
+    """ConfigClass to be transformed."""
+
+    opt_a: str = simple("Option A")
+    opt_b: str = simple("Option B")
+    opt_c: str = simple("Option C")
+
+    def transform(self) -> set[str]:
+        """Transform the ConfigClass to a set."""
+        return {self.opt_a, self.opt_b, self.opt_c}
+
+
+@dataclasses.dataclass
+class TransformGroup(ConfigClass):
+    """Example with a group that uses a transform."""
+
+    opts: set[str] = transform_arg(
+        "Options group",
+        transform_from=GroupToTransform,
+        transform=GroupToTransform.transform,
+    )
+
+
+transformsubgroupgroup = ArgGroup(
+    subgroups=[
+        ArgSubGroup(
+            "opts",
+            GroupToTransform,
+            ArgGroup(
+                members=[
+                    ArgSpec(
+                        "opt-a",
+                        "Option A",
+                        ["--opt-a"],
+                        ArgOpts(type=str, required=True),
+                    ),
+                    ArgSpec(
+                        "opt-b",
+                        "Option B",
+                        ["--opt-b"],
+                        ArgOpts(type=str, required=True),
+                    ),
+                    ArgSpec(
+                        "opt-c",
+                        "Option C",
+                        ["--opt-c"],
+                        ArgOpts(type=str, required=True),
+                    ),
+                ]
+            ),
+            transform=GroupToTransform.transform,
+        )
+    ]
+)
+
+
 # =============================================================================
 # Test cases
 # =============================================================================
@@ -266,6 +347,8 @@ test_group_from_class_cases = {
         HasMutuallyExclusiveGroupCase,
         hasmutuallyexclusivegroup,
     ),
+    "TransformMembers": (TransformMembers, transformgroup),
+    "TransformGroup": (TransformGroup, transformsubgroupgroup),
 }
 
 
@@ -419,6 +502,18 @@ test_e2e_parser_cases = {
         hasmutuallyexclusivegroup,
         ["--opt-b", "1"],
         {"subgroup": MutuallyExclusiveGroup(opt_a=0, opt_b=1)},
+    ),
+    # =========================================================================
+    # Transform tests
+    "transform_arg": (
+        transformgroup,
+        ["--opt-a", "a", "b", "c", "a"],
+        {"opt_a": {"a", "b", "c"}},
+    ),
+    "transform_group": (
+        transformsubgroupgroup,
+        ["--opt-a", "a", "--opt-b", "b", "--opt-c", "c"],
+        {"opts": {"a", "b", "c"}},
     ),
 }
 

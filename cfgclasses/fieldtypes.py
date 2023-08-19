@@ -1,6 +1,6 @@
 """Field types module providing helper functions for defining fields."""
 import dataclasses
-from typing import Any, Iterable, Optional, Union
+from typing import Any, Callable, Type, Iterable, Optional, Union, TypeVar
 
 __all__ = (
     "choices",
@@ -9,7 +9,11 @@ __all__ = (
     "positional",
     "simple",
     "store_true",
+    "transform_arg",
 )
+
+
+_T = TypeVar("_T")
 
 
 def _field(
@@ -107,6 +111,18 @@ def positional(
         metadata | {"positional": True},
         default=default,
         default_factory=default_factory,
+    )
+
+
+def transform_arg(
+    helpstr: str,
+    transform: Callable[[_T], Any],
+    transform_from: Type[_T],
+) -> Any:
+    """Setup a field with a transform function."""
+    return _field(
+        helpstr,
+        metadata={"transform": transform, "transform_from": transform_from},
     )
 
 

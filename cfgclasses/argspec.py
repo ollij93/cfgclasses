@@ -1,7 +1,16 @@
 """Module for defining the argument specification for a ConfigClass."""
 import argparse
 import dataclasses
-from typing import Any, Iterable, Type, Union, get_args, get_origin
+from typing import (
+    Any,
+    Callable,
+    Iterable,
+    Optional,
+    Type,
+    Union,
+    get_args,
+    get_origin,
+)
 
 from .configgroup import ConfigGroup
 
@@ -15,6 +24,11 @@ class ArgSpecNotSpecified:
 
 def _argspec_optional() -> Any:
     return dataclasses.field(default_factory=ArgSpecNotSpecified)
+
+
+def argparse_type_from_field(field: dataclasses.Field[Any]) -> Type[Any]:
+    """Get the type to use for a field when interacting with argparse."""
+    return field.metadata.get("transform_from", field.type)
 
 
 @dataclasses.dataclass
@@ -54,20 +68,22 @@ class ArgOpts:
         }
 
     @staticmethod
-    def from_field(field: dataclasses.Field[Any]) -> "ArgOpts":
+    def from_field(
+        type_: Type[Any], field: dataclasses.Field[Any]
+    ) -> "ArgOpts":
         """Instantiate an instance of this class from the field definition."""
         opts = ArgOpts()
         # For boolean types that do not default to true, use the 'store_true' action
         # allowing flags like `--debug` to be used rather than `--debug True`
-        if field.type == bool and field.default is not True:
+        if type_ == bool and field.default is not True:
             opts.action = "store_true"
         # Handle list types specially using nargs
-        elif get_origin(field.type) == list:
+        elif get_origin(type_) == list:
             opts.nargs = "+"
-            opts.type = get_args(field.type)[0]
+            opts.type = get_args(type_)[0]
         # Handle special Union types - see individual details
-        elif get_origin(field.type) == Union:
-            type_args = get_args(field.type)
+        elif get_origin(type_) == Union:
+            type_args = get_args(type_)
             # For `Optional[type]` just set required=False and specify the type
             if len(type_args) == 2 and type(None) in type_args:
                 opts.type = [a for a in type_args if a is not None][0]
@@ -77,7 +93,7 @@ class ArgOpts:
                 raise TypeError(f"Can't handle Union of types: {type_args}")
         # For all remaining types, just leave the type for argparse to deal with
         else:
-            opts.type = field.type
+            opts.type = type_
 
         if field.default is not dataclasses.MISSING:
             opts.default = field.default
@@ -93,9 +109,7 @@ class ArgOpts:
         if opts.nargs != ArgSpecNotSpecified():
             opts.nargs = field.metadata.get("nargs", opts.nargs)
         elif "nargs" in field.metadata:
-            raise TypeError(
-                f"Can't override nargs for non-list type {field.type}"
-            )
+            raise TypeError(f"Can't override nargs for non-list type {type_}")
 
         return opts
 
@@ -114,17 +128,21 @@ class ArgSpec:
         List of names (such as -f or --foo) for the argument.
     ..attribute:: opts
         ArgOpts instance containing the options for the argument.
+    ..attribute:: transform
+        Function to transform the value of the argument.
     """
 
     name: str
     help: str
     optnames: list[str]
     opts: ArgOpts = dataclasses.field(default_factory=ArgOpts)
+    transform: Optional[Callable[[Any], Any]] = dataclasses.field(default=None)
 
     @staticmethod
     def from_field(field: dataclasses.Field[Any]) -> "ArgSpec":
         """Instantiate an instance of this class from the field definition."""
-        opts = ArgOpts.from_field(field)
+        type_ = argparse_type_from_field(field)
+        opts = ArgOpts.from_field(type_, field)
         positional = field.metadata.get("positional", False)
         if positional:
             # For positional arguments, its not valid to pass the required flag
@@ -141,6 +159,7 @@ class ArgSpec:
             field.metadata.get("help", ""),
             optnames,
             opts,
+            field.metadata.get("transform"),
         )
 
     def add_to_parser(self, parser: argparse._ActionsContainer) -> None:
@@ -154,6 +173,11 @@ class ArgSpec:
             **(kwargs | self.opts.to_kwargs()),
         )
 
+    def from_namespace(self, namespace: argparse.Namespace) -> Any:
+        """Extract the value of this argument from an argparse.Namespace."""
+        transform = self.transform or (lambda x: x)
+        return transform(getattr(namespace, self.name))
+
 
 @dataclasses.dataclass
 class ArgSubGroup:
@@ -166,11 +190,21 @@ class ArgSubGroup:
         ConfigClass type of the subgroup.
     ..attribute:: group
         The ArgGroup for the subgroup.
+    ..attribute:: transform
+        Function to transform the value of the subgroup.
     """
 
     name: str
     type: Type[ConfigGroup]
     group: "ArgGroup"
+    transform: Optional[Callable[[Any], Any]] = dataclasses.field(default=None)
+
+    def from_namespace(self, namespace: argparse.Namespace) -> Any:
+        """Extract the value of this subgroup from an argparse.Namespace."""
+        transform = self.transform or (lambda x: x)
+        return transform(
+            self.type(**self.group.extract_args_from_namespace(namespace))
+        )
 
 
 @dataclasses.dataclass
@@ -198,8 +232,9 @@ class ArgGroup:
         """Instantiate an instance of this class from the ConfigGroup class"""
         group = ArgGroup(is_mutually_exclusive=is_mutually_exclusive)
         for field in dataclasses.fields(configcls):
+            type_ = argparse_type_from_field(field)
             try:
-                isconfigcls = issubclass(field.type, ConfigGroup)
+                isconfigcls = issubclass(type_, ConfigGroup)
             except TypeError:
                 isconfigcls = False
 
@@ -207,11 +242,12 @@ class ArgGroup:
                 group.subgroups.append(
                     ArgSubGroup(
                         field.name,
-                        field.type,
+                        type_,
                         ArgGroup.from_class(
-                            field.type,
+                            type_,
                             field.metadata.get("mutually_exclusive", False),
                         ),
+                        field.metadata.get("transform"),
                     )
                 )
             else:
@@ -236,11 +272,9 @@ class ArgGroup:
     ) -> dict[str, Any]:
         """Extract arguments from an argparse.Namespace."""
         return {
-            spec.name.replace("-", "_"): getattr(namespace, spec.name)
+            spec.name.replace("-", "_"): spec.from_namespace(namespace)
             for spec in self.members
         } | {
-            subgroup.name: subgroup.type(
-                **subgroup.group.extract_args_from_namespace(namespace)
-            )
+            subgroup.name: subgroup.from_namespace(namespace)
             for subgroup in self.subgroups
         }
