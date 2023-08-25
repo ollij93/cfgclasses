@@ -9,7 +9,7 @@ import cfgclasses as cfg
 class Config(cfg.ConfigClass):
     """Config class for this example script."""
 
-    natural: int = cfg.simple("A natural number")
+    natural: int = cfg.arg("A natural number")
 
     def validate(self) -> None:
         """Validate the provided number is a natural number."""

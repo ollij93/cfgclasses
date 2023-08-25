@@ -39,14 +39,14 @@ from typing import Optional
 @dataclasses.dataclass
 class Config(cfg.ConfigClass):
     # Simple options are required on the CLI
-    intopt: int = cfg.simple("A simple integer field")
-    inpath: Path = cfg.simple("A required Path field")
+    intopt: int = cfg.arg("A simple integer field")
+    inpath: Path = cfg.arg("A required Path field")
 
     # Optional fields default to None when not specified
     outpath: Optional[Path] = cfg.optional("An optional Path field")
 
     # Can specify custom default or default_factory values
-    stropt: str = cfg.simple("A string field with a default", default="X")
+    stropt: str = cfg.arg("A string field with a default", default="X")
 
     # The authors preference is to put run modes on the config classes.
     # This is entirely optional, and main() methods that take in the Config

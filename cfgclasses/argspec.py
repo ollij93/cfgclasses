@@ -28,7 +28,7 @@ def _argspec_optional() -> Any:
 
 def argparse_type_from_field(field: dataclasses.Field[Any]) -> Type[Any]:
     """Get the type to use for a field when interacting with argparse."""
-    return field.metadata.get("transform_from", field.type)
+    return field.metadata.get("transform_from") or field.type
 
 
 @dataclasses.dataclass
@@ -149,8 +149,8 @@ class ArgSpec:
             opts.required = ArgSpecNotSpecified()
 
         name = field.name.replace("_", "-")
-        optnames = (
-            field.metadata.get("optnames", [f"--{name}"])
+        optnames = list(
+            (field.metadata.get("optnames") or [f"--{name}"])
             if not positional
             else [name]
         )

@@ -7,13 +7,12 @@ import pytest
 
 from cfgclasses import (
     ConfigClass,
+    arg,
     choices,
     mutually_exclusive_group,
     optional,
     positional,
-    simple,
     store_true,
-    transform_arg,
 )
 from cfgclasses.argspec import ArgGroup, ArgOpts, ArgSpec, ArgSubGroup
 
@@ -25,7 +24,7 @@ from cfgclasses.argspec import ArgGroup, ArgOpts, ArgSpec, ArgSubGroup
 class SimpleOptCase(ConfigClass):
     """Case with a simple required option."""
 
-    strfield: str = simple("A simple string field")
+    strfield: str = arg("A simple string field")
 
 
 simpleoptgroup = ArgGroup(
@@ -91,9 +90,9 @@ posoptgroup = ArgGroup(
 class PositionalAndOptionalCase(ConfigClass):
     """Case with a combination of positional and optional options."""
 
-    strfield: str = simple("A simple string field")
+    strfield: str = arg("A simple string field")
     posfield: str = positional("A positional string field")
-    intfield: int = simple("An integer field")
+    intfield: int = arg("An integer field")
     optfield: Optional[str] = optional("An optional string field")
     poslistfield: list[str] = positional(
         "An optional positional list string field",
@@ -180,9 +179,7 @@ storetrueoptgroup = ArgGroup(
 class OptNameOptCase(ConfigClass):
     """Case with a custom option name."""
 
-    strfield: str = simple(
-        "A simple string field", optnames=["-c", "--custom-name"]
-    )
+    strfield: str = arg("A simple string field", "-c", "--custom-name")
 
 
 optnameoptgroup = ArgGroup(
@@ -213,8 +210,8 @@ hassubgroup = ArgGroup(
 class MutuallyExclusiveGroup(ConfigClass):
     """Example mutually exclusive group."""
 
-    opt_a: int = simple("Option A", default=0)
-    opt_b: int = simple("Option B", default=0)
+    opt_a: int = arg("Option A", default=0)
+    opt_b: int = arg("Option B", default=0)
 
 
 @dataclasses.dataclass
@@ -255,9 +252,7 @@ hasmutuallyexclusivegroup = ArgGroup(
 class TransformMembers(ConfigClass):
     """Example with a member that uses a transform."""
 
-    opt_a: set[str] = transform_arg(
-        "Option A", transform=set, transform_from=list[str]
-    )
+    opt_a: set[str] = arg("Option A", transform=set, transform_from=list[str])
 
 
 transformgroup = ArgGroup(
@@ -277,9 +272,9 @@ transformgroup = ArgGroup(
 class GroupToTransform(ConfigClass):
     """ConfigClass to be transformed."""
 
-    opt_a: str = simple("Option A")
-    opt_b: str = simple("Option B")
-    opt_c: str = simple("Option C")
+    opt_a: str = arg("Option A")
+    opt_b: str = arg("Option B")
+    opt_c: str = arg("Option C")
 
     def transform(self) -> set[str]:
         """Transform the ConfigClass to a set."""
@@ -290,7 +285,7 @@ class GroupToTransform(ConfigClass):
 class TransformGroup(ConfigClass):
     """Example with a group that uses a transform."""
 
-    opts: set[str] = transform_arg(
+    opts: set[str] = arg(
         "Options group",
         transform_from=GroupToTransform,
         transform=GroupToTransform.transform,
