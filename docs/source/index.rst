@@ -29,3 +29,16 @@ part of the documentation is for you.
    :caption: API Reference:
 
    api
+
+Further Information
+-------------------
+
+The following documentation pages are available and cover topics that are not
+expected to be of general interest to users, but are provided as internal and
+external references.
+
+.. toctree:: 
+   :maxdepth: 2
+   :caption: Further Information:
+
+   design

@@ -1,9 +1,9 @@
 """Primary module of the cfgclasses package."""
 import argparse
 import dataclasses
-from typing import Optional, Sequence, Type, TypeVar
+from typing import Generic, Optional, Sequence, Type, TypeVar
 
-from .argspec import ArgGroup
+from .argspec import Specification
 from .configgroup import ConfigGroup, validate_post_argparse
 
 __all__ = (
@@ -12,14 +12,15 @@ __all__ = (
 )
 
 _T = TypeVar("_T", bound="ConfigClass")
+_U = TypeVar("_U", bound="ConfigClass")
 
 
 @dataclasses.dataclass
-class ConfigSubmode:
+class ConfigSubmode(Generic[_T]):
     """Data container for a submode definition."""
 
     name: str
-    configcls: Type["ConfigClass"]
+    configcls: Type[_T]
 
 
 @dataclasses.dataclass
@@ -32,58 +33,54 @@ class ConfigClass(ConfigGroup):
     ) -> _T:
         """Abstract parse_args method."""
         parser = argparse.ArgumentParser(prog=prog)
-        arggroup = ArgGroup.from_class(cls)
-        arggroup.add_to_parser(parser)
+        specification = Specification.from_class(cls)
+        specification.add_to_parser(parser)
         namespace = parser.parse_args(argv)
-        ret = cls(**arggroup.extract_args_from_namespace(namespace))
+        ret = specification.construct_from_namespace(namespace)
         validate_post_argparse(ret, parser)
         return ret
 
     @classmethod
     def _add_submode_parsers(
-        cls, parser: argparse.ArgumentParser, submodes: list[ConfigSubmode]
-    ) -> dict[str, tuple[ConfigSubmode, ArgGroup]]:
+        cls, parser: argparse.ArgumentParser, submodes: list[ConfigSubmode[_T]]
+    ) -> dict[str, Specification[_T]]:
         """Add the submode parsers to the given argparse parser."""
-        submode_groups = {}
+        submode_specs = {}
         subparsers = parser.add_subparsers()
         for submode in submodes:
             subparser = subparsers.add_parser(
                 submode.name, help=submode.configcls.__doc__
             )
             subparser.set_defaults(submode_name=submode.name)
-            subgroup = ArgGroup.from_class(submode.configcls)
-            subgroup.add_to_parser(subparser)
-            submode_groups[submode.name] = (submode, subgroup)
-        return submode_groups
+            subspec = Specification.from_class(submode.configcls)
+            subspec.add_to_parser(subparser)
+            submode_specs[submode.name] = subspec
+        return submode_specs
 
     @classmethod
     def parse_args_with_submodes(
         cls: Type[_T],
         argv: Sequence[str],
-        submodes: list[ConfigSubmode],
+        submodes: list[ConfigSubmode[_U]],
         prog: Optional[str] = None,
-    ) -> tuple[_T, "ConfigClass"]:
+    ) -> tuple[_T, _U]:
         """Method used to define and process a config class."""
         if not submodes:
             raise ValueError("Can't parse_args_with_submodes with no submodes")
 
         parser = argparse.ArgumentParser(prog=prog)
-        arggroup = ArgGroup.from_class(cls)
-        arggroup.add_to_parser(parser)
+        spec = Specification.from_class(cls)
+        spec.add_to_parser(parser)
 
-        submode_groups = cls._add_submode_parsers(parser, submodes)
+        submode_specs = cls._add_submode_parsers(parser, submodes)
 
         namespace = parser.parse_args(argv)
         if submodes and not hasattr(namespace, "submode_name"):
             parser.error("No submode selected")
 
-        selected_submode, selected_submode_group = submode_groups[
-            namespace.submode_name
-        ]
-        toplvlcfg = cls(**arggroup.extract_args_from_namespace(namespace))
-        submodecfg: ConfigClass = selected_submode.configcls(
-            **selected_submode_group.extract_args_from_namespace(namespace)
-        )
+        selected_submode_spec = submode_specs[namespace.submode_name]
+        toplvlcfg = spec.construct_from_namespace(namespace)
+        submodecfg = selected_submode_spec.construct_from_namespace(namespace)
         validate_post_argparse(toplvlcfg, parser)
         validate_post_argparse(submodecfg, parser)
         return toplvlcfg, submodecfg

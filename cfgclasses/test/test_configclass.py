@@ -61,7 +61,10 @@ def test_submodes() -> None:
 
         debug: bool = store_true("Enable debug mode")
 
-    submodes = [ConfigSubmode("a", SubmodeA), ConfigSubmode("b", SubmodeB)]
+    submodes: list[ConfigSubmode[ConfigClass]] = [
+        ConfigSubmode("a", SubmodeA),
+        ConfigSubmode("b", SubmodeB),
+    ]
 
     # Check successful specification of submode A
     assert TopLevelConfig.parse_args_with_submodes(

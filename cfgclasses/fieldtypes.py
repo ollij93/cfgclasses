@@ -1,6 +1,8 @@
 """Field types module providing helper functions for defining fields."""
 import dataclasses
-from typing import Any, Iterable, Optional, Union
+from typing import Any, Optional, Union
+
+from .argspec import CFG_METADATA_FIELD, ConfigOpts
 
 __all__ = (
     "choices",
@@ -13,19 +15,11 @@ __all__ = (
 
 
 def _field(
-    helpstr: str,
-    metadata: Optional[dict[str, Any]] = None,
-    *,
-    optnames: Optional[Iterable[str]] = None,
+    opts: ConfigOpts,
     **kwargs: Any,
 ) -> Any:
-    if metadata is None:
-        metadata = {}
-    if optnames is not None:
-        metadata["optnames"] = optnames
-
     return dataclasses.field(
-        metadata=(metadata | {"help": helpstr}),
+        metadata={CFG_METADATA_FIELD: opts},
         **kwargs,
     )
 
@@ -35,57 +29,55 @@ def simple(
     *,
     default: Any = dataclasses.MISSING,
     default_factory: Any = dataclasses.MISSING,
-    optnames: Optional[Iterable[str]] = None,
-    metadata: Optional[dict[str, Any]] = None,
+    optnames: Optional[list[str]] = None,
 ) -> Any:
     """Setup a simple field with a help string and optionally a default value."""
     return _field(
-        helpstr,
-        metadata,
+        ConfigOpts(helpstr, optnamesorpos=(optnames or False)),
         default=default,
         default_factory=default_factory,
-        optnames=optnames,
     )
 
 
 def store_true(
     helpstr: str,
     *,
-    optnames: Optional[Iterable[str]] = None,
-    metadata: Optional[dict[str, Any]] = None,
+    optnames: Optional[list[str]] = None,
 ) -> Any:
     """Setup a boolean field that doesn't take a value such a '--debug'."""
-    return _field(helpstr, metadata, default=False, optnames=optnames)
+    return _field(
+        ConfigOpts(helpstr, optnamesorpos=(optnames or False)),
+        default=False,
+    )
 
 
 def optional(
     helpstr: str,
     *,
-    optnames: Optional[Iterable[str]] = None,
-    metadata: Optional[dict[str, Any]] = None,
+    optnames: Optional[list[str]] = None,
 ) -> Any:
     """Setup an optional field which defaults to None."""
-    return _field(helpstr, metadata, default=None, optnames=optnames)
+    return _field(
+        ConfigOpts(helpstr, optnamesorpos=(optnames or False)),
+        default=None,
+    )
 
 
 def choices(
     helpstr: str,
-    choices_: Iterable[Any],
+    choices_: list[Any],
     *,
     default: Any = dataclasses.MISSING,
     default_factory: Any = dataclasses.MISSING,
-    optnames: Optional[Iterable[str]] = None,
-    metadata: Optional[dict[str, Any]] = None,
+    optnames: Optional[list[str]] = None,
 ) -> Any:
     """Setup a choices field with an optional default choice."""
-    if metadata is None:
-        metadata = {}
     return _field(
-        helpstr,
-        metadata | {"choices": choices_},
+        ConfigOpts(
+            helpstr, optnamesorpos=(optnames or False), choices=choices_
+        ),
         default=default,
         default_factory=default_factory,
-        optnames=optnames,
     )
 
 
@@ -95,16 +87,10 @@ def positional(
     default: Any = dataclasses.MISSING,
     default_factory: Any = dataclasses.MISSING,
     nargs: Union[int, str, None] = None,
-    metadata: Optional[dict[str, Any]] = None,
 ) -> Any:
     """Setup a simple field with a help string and optionally a default value."""
-    if metadata is None:
-        metadata = {}
-    if nargs is not None:
-        metadata["nargs"] = nargs
     return _field(
-        helpstr,
-        metadata | {"positional": True},
+        ConfigOpts(helpstr, optnamesorpos=True, nargs=nargs),
         default=default,
         default_factory=default_factory,
     )
