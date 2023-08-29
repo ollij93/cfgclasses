@@ -1,4 +1,5 @@
 """Module for defining the argument specification for a ConfigClass."""
+import abc
 import argparse
 import dataclasses
 from typing import (
@@ -35,24 +36,27 @@ class ConfigOpts:
 
     ..attribute:: help
         Help string for the argument.
-    ..attribute:: optnamesorpos
-        List of names (such as -f or --force) for the argument.
-        Alternatively, if this is a boolean, it indicates whether the argument is positional.
-        If a list, the argument is not positional.
     ..attribute:: metavar
         Name to display for the argument in usage messages.
     ..attribute:: choices
         List of valid choices for the argument.
-    ..attribute:: nargs
-        Number of arguments to consume. E.g. 1, "+", "*", etc.
-        Should only be set for list types.
     """
 
     help: str = dataclasses.field(default="")
-    optnamesorpos: OptNamesOrPos = dataclasses.field(default=False)
     metavar: Optional[str] = dataclasses.field(default=None)
     choices: Optional[Iterable[Any]] = dataclasses.field(default=None)
-    nargs: Optional[Union[int, str]] = dataclasses.field(default=None)
+
+
+@dataclasses.dataclass
+class NonPositionalConfigOpts(ConfigOpts):
+    """
+    Config options for a non-positional argument.
+
+    ..attribute:: optnames
+        List of alternative names (such as -f or --force) for the argument.
+    """
+
+    optnames: list[str] = dataclasses.field(default_factory=list)
 
 
 class NotSpecified:
@@ -60,13 +64,6 @@ class NotSpecified:
 
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, NotSpecified)
-
-
-def _none_to_notspec(value: _T | None) -> _T | NotSpecified:
-    """Convert None to NotSpecified."""
-    if value is None:
-        return NotSpecified()
-    return value
 
 
 def _default_from_field(field: dataclasses.Field[_T]) -> _T | NotSpecified:
@@ -88,180 +85,209 @@ def _is_optional_type(metatype: Type[Any]) -> bool:
     )
 
 
-def _aptype_from_metatype(metatype: Type[Any]) -> Type[Any]:
-    """Convert a metatype to the type arg used by argparse."""
-    # For lists, simply remove the list wrapper - nargs is used to create the list
-    if get_origin(metatype) == list:
-        return get_args(metatype)[0]  # type: ignore
-    # For `Optional[type]` just remove the Optional wrapper - the None value
-    # is automatically included by argparse. The use of required and
-    # defaults will also impact this.
-    if _is_optional_type(metatype):
-        return [a for a in get_args(metatype) if a is not None][0]  # type: ignore
-    # No other type wrappers are currently supported
-    if get_origin(metatype) is not None:
-        raise TypeError(
-            f"Can't handle metatype {get_origin(metatype)} of {metatype}"
-        )
-    # For all remaining types, just leave the type for argparse to deal with
-    return metatype
-
-
-def _nargs_from_metadata(
-    metadata: ConfigOpts, metatype: Type[Any]
-) -> int | str | NotSpecified:
-    """Determine the nargs value from the metadata and metatype."""
-    if get_origin(metatype) == list:
-        # Allow users to override nargs, e.g. to go from "+" -> "*" if empty
-        # lists are permitted
-        return metadata.nargs or "+"
-
-    if metadata.nargs is not None:
-        raise TypeError(f"Can't handle nargs for non-list type {metatype}")
-
-    return NotSpecified()
-
-
 @dataclasses.dataclass
-class ArgOpts:
-    """
-    Options for an argument to be passed to
-    argparse.ArgumentParser.add_argument().
-
-    ..attribute:: help
-        Help string for the argument.
-    ..attribute:: metatype
-        Type of the field this argument is for, e.g. Optional[str], list[int], etc.
-    ..attribute:: type
-        Type of the argument given to argparse. E.g. int, str, etc.
-    ..attribute:: default
-        Default value for the argument.
-    ..attribute:: metavar
-        Name to display for the argument in usage messages.
-    ..attribute:: choices
-        List of valid choices for the argument.
-    ..attribute:: action
-        Action to take when the argument is encountered. E.g. "store_true"
-    .. attribute:: nargs
-        Number of arguments to consume. E.g. 1, "+", "*", etc.
-    """
-
-    help: str
-    metatype: Any
-    type: Type[Any]
-    default: Any = dataclasses.field(default_factory=NotSpecified)
-    metavar: str | NotSpecified = dataclasses.field(
-        default_factory=NotSpecified
-    )
-    choices: Iterable[Any] | NotSpecified = dataclasses.field(
-        default_factory=NotSpecified
-    )
-    action: str | NotSpecified = dataclasses.field(
-        default_factory=NotSpecified
-    )
-    nargs: Union[int, str] | NotSpecified = dataclasses.field(
-        default_factory=NotSpecified
-    )
-
-    def required(self, positional: bool) -> bool:
-        """Determine whether the "required" flag should be set."""
-        return not (
-            _is_optional_type(self.metatype)
-            or positional
-            or self.default != NotSpecified()
-        )
-
-    def to_kwargs(self, positional: bool) -> dict[str, Any]:
-        """Convert to kwargs for argparse.ArgumentParser.add_argument()"""
-        return {
-            k: v
-            for k, v in dataclasses.asdict(self).items()
-            # Don't output unset values or the metavar
-            if not isinstance(v, NotSpecified) and k != "metatype"
-            # Don't specify type when using "store_true" action
-            and (k != "type" or self.action != "store_true")
-        } | ({"required": True} if self.required(positional) else {})
-
-    @staticmethod
-    def from_field(
-        metatype: Type[Any], metadata: ConfigOpts, default: Any
-    ) -> "ArgOpts":
-        """Instantiate an instance of this class from the field definition."""
-        return ArgOpts(
-            metadata.help,
-            metatype=metatype,
-            type=_aptype_from_metatype(metatype),
-            default=default,
-            metavar=_none_to_notspec(metadata.metavar),
-            choices=_none_to_notspec(metadata.choices),
-            nargs=_nargs_from_metadata(metadata, metatype),
-            # For boolean types that do not default to true, use the
-            # 'store_true' action allowing flags like `--debug` to be used
-            # rather than `--debug True`
-            action=(
-                "store_true"
-                if metatype == bool and default is not True
-                else NotSpecified()
-            ),
-        )
-
-
-@dataclasses.dataclass
-class SpecificationItem:
+class SpecificationItem(abc.ABC):
     """
     Specification for a single argument to be passed to
     argparse.ArgumentParser.add_argument().
 
     ..attribute:: name
         Name of the argument used as "--name" on the command line.
-    ..attribute:: optnames
-        List of names (such as -f or --force) for the argument.
-        If None, the argument is positional.
-    ..attribute:: opts
-        ArgOpts instance containing the options for the argument.
     """
 
     name: str
-    optnames: Optional[list[str]]
-    opts: ArgOpts
+    type: Type[Any]
+    help: str = dataclasses.field(default="")
+    metavar: Optional[str] = dataclasses.field(default=None)
+    choices: Optional[Iterable[Any]] = dataclasses.field(default=None)
+    default: Any | NotSpecified = dataclasses.field(
+        default_factory=NotSpecified
+    )
 
-    @staticmethod
-    def from_field(field: dataclasses.Field[Any]) -> "SpecificationItem":
-        """Instantiate an instance of this class from the field definition."""
-        metadata: ConfigOpts = field.metadata.get(
-            CFG_METADATA_FIELD, ConfigOpts()
+    @abc.abstractmethod
+    def get_optnames(self) -> list[str]:
+        """Get the optnames for this argument."""
+
+    def get_kwargs(self) -> dict[str, Any]:
+        """Get the kwargs for this argument."""
+        return (
+            {
+                "dest": self.name,
+                "type": self.type,
+                "help": self.help,
+            }
+            | ({"metavar": self.metavar} if self.metavar is not None else {})
+            | ({"choices": self.choices} if self.choices is not None else {})
+            | (
+                # Only give argparse the default if it is specified as None is a
+                # valid value for a default
+                {"default": self.default}
+                if self.default != NotSpecified()
+                else {"required": True}
+            )
         )
 
-        opts = ArgOpts.from_field(
-            field.type, metadata, _default_from_field(field)
-        )
-        name = field.name.replace("_", "-")
-        optnames = (
-            metadata.optnamesorpos
-            if isinstance(metadata.optnamesorpos, list)
-            else None
-            if metadata.optnamesorpos
-            else []
-        )
-        return SpecificationItem(
-            name,
-            optnames,
-            opts,
-        )
+    @classmethod
+    def get_type_from_field(cls, field: dataclasses.Field[Any]) -> Type[Any]:
+        """Get the type to use with argparse for this field."""
+        # Default is just the field.type - but can be overridden e.g. for lists
+        return field.type
 
     def add_to_parser(self, parser: argparse._ActionsContainer) -> None:
         """Add this argument to the given parser."""
-        kwargs: dict[str, Any] = {}
-        if self.optnames is not None:
-            kwargs["dest"] = self.name
         parser.add_argument(
-            *(
-                [self.name]
-                if self.optnames is None
-                else (self.optnames or [f"--{self.name}"])
-            ),
-            **(kwargs | self.opts.to_kwargs(self.optnames is None)),
+            *self.get_optnames(),
+            **self.get_kwargs(),
         )
+
+
+@dataclasses.dataclass
+class StandardSpecItem(SpecificationItem):
+    """
+    A non-positional argument specification item.
+
+    .. attribute:: optnames
+        List of alternative names (such as -f or --force) for the argument.
+        If an empty list the name of the specification item is used with any
+        underscores replaced with hyphens.
+    """
+
+    optnames: list[str] = dataclasses.field(default_factory=list)
+
+    @classmethod
+    def from_field(
+        cls, metadata: NonPositionalConfigOpts, field: dataclasses.Field[Any]
+    ) -> "SpecificationItem":
+        """Instantiate an instance of this class from the field definition."""
+        return cls(
+            field.name,
+            cls.get_type_from_field(field),
+            metadata.help,
+            metadata.metavar,
+            metadata.choices,
+            _default_from_field(field),
+            metadata.optnames,
+        )
+
+    def get_optnames(self) -> list[str]:
+        return self.optnames or [f"--{self.name.replace('_', '-')}"]
+
+
+@dataclasses.dataclass
+class ListSpecItem(StandardSpecItem):
+    """
+    A non-positional argument specification item that takes a list of values.
+    """
+
+    def get_kwargs(self) -> dict[str, Any]:
+        return super().get_kwargs() | {"nargs": "+"}
+
+    @classmethod
+    def get_type_from_field(cls, field: dataclasses.Field[Any]) -> Type[Any]:
+        # For lists, the type is the type of the list elements
+        return get_args(field.type)[0]  # type: ignore
+
+
+@dataclasses.dataclass
+class OptionalSpecItem(StandardSpecItem):
+    """A non-positional argument specification item that is optional."""
+
+    def get_kwargs(self) -> dict[str, Any]:
+        return super().get_kwargs() | {"required": False}
+
+    @classmethod
+    def get_type_from_field(cls, field: dataclasses.Field[Any]) -> Type[Any]:
+        # For Optional types, the type is the type of the optional value
+        return get_args(field.type)[0]  # type: ignore
+
+
+@dataclasses.dataclass
+class BoolSpecItem(StandardSpecItem):
+    """A non-positional argument specification item that is a boolean."""
+
+    def get_kwargs(self) -> dict[str, Any]:
+        action = "store_true"
+        if self.default is True:
+            action = "store_false"
+        ret = super().get_kwargs() | {"action": action}
+        # Don't specify type for boolean flags as theirs nothing to convert
+        del ret["type"]
+        # Don't specify required as theirs implicitly a default
+        if "required" in ret:
+            del ret["required"]
+        return ret
+
+
+class PositionalSpecItem(SpecificationItem):
+    """A positional argument specification item."""
+
+    def get_optnames(self) -> list[str]:
+        return [self.name]
+
+    @classmethod
+    def from_field(
+        cls, metadata: ConfigOpts, field: dataclasses.Field[Any]
+    ) -> "SpecificationItem":
+        """Instantiate an instance of this class from the field definition."""
+        return cls(
+            field.name,
+            cls.get_type_from_field(field),
+            metadata.help,
+            metadata.metavar,
+            metadata.choices,
+            _default_from_field(field),
+        )
+
+    def get_kwargs(self) -> dict[str, Any]:
+        ret = super().get_kwargs()
+        # Don't specify dest or required for positional arguments
+        del ret["dest"]
+        # Don't specify required as theirs implicitly a default
+        if "required" in ret:
+            del ret["required"]
+        return ret
+
+
+class ListPositionalSpecItem(PositionalSpecItem):
+    """A positional argument specification item that takes a list of values."""
+
+    def get_kwargs(self) -> dict[str, Any]:
+        return super().get_kwargs() | {"nargs": "+"}
+
+    @classmethod
+    def get_type_from_field(cls, field: dataclasses.Field[Any]) -> Type[Any]:
+        # For lists, the type is the type of the list elements
+        return get_args(field.type)[0]  # type: ignore
+
+
+def specitem_from_field(field: dataclasses.Field[Any]) -> "SpecificationItem":
+    """Instantiate an instance of this class from the field definition."""
+    metadata: ConfigOpts = field.metadata.get(
+        CFG_METADATA_FIELD, NonPositionalConfigOpts()
+    )
+    ret: SpecificationItem
+    if isinstance(metadata, NonPositionalConfigOpts):
+        # Handle the creation of the standard specification item
+        if get_origin(field.type) == list:
+            ret = ListSpecItem.from_field(metadata, field)
+        elif _is_optional_type(field.type):
+            ret = OptionalSpecItem.from_field(metadata, field)
+        elif field.type == bool:
+            ret = BoolSpecItem.from_field(metadata, field)
+        else:
+            ret = StandardSpecItem.from_field(metadata, field)
+    else:
+        # Handle the creation of the positional specification item
+        if get_origin(field.type) == list:
+            ret = ListPositionalSpecItem.from_field(metadata, field)
+        elif get_origin(field.type) is None:
+            ret = PositionalSpecItem.from_field(metadata, field)
+        else:
+            raise TypeError(
+                f"Can't use type {field.type} with a positional argument."
+            )
+
+    return ret
 
 
 def _is_configcls(type_: Any) -> bool:
@@ -313,7 +339,7 @@ class Specification(Generic[_ConfigGroupT]):
                     field.metadata.get("mutually_exclusive", False),
                 )
             else:
-                spec.members.append(SpecificationItem.from_field(field))
+                spec.members.append(specitem_from_field(field))
         return spec
 
     def add_to_parser(self, parser: argparse._ActionsContainer) -> None:

@@ -14,7 +14,18 @@ from cfgclasses import (
     simple,
     store_true,
 )
-from cfgclasses.argspec import ArgOpts, Specification, SpecificationItem
+from cfgclasses.argspec import (
+    CFG_METADATA_FIELD,
+    BoolSpecItem,
+    ListPositionalSpecItem,
+    ListSpecItem,
+    NonPositionalConfigOpts,
+    OptionalSpecItem,
+    PositionalSpecItem,
+    Specification,
+    SpecificationItem,
+    StandardSpecItem,
+)
 
 
 # =============================================================================
@@ -30,14 +41,10 @@ class SimpleOptCase(ConfigClass):
 simpleoptspec = Specification(
     SimpleOptCase,
     members=[
-        SpecificationItem(
+        StandardSpecItem(
             "strfield",
-            [],
-            ArgOpts(
-                help="A simple string field",
-                metatype=str,
-                type=str,
-            ),
+            help="A simple string field",
+            type=str,
         )
     ],
 )
@@ -53,16 +60,42 @@ class OptionalOptCase(ConfigClass):
 optionaloptspec = Specification(
     OptionalOptCase,
     members=[
-        SpecificationItem(
+        OptionalSpecItem(
             "optfield",
-            [],
-            ArgOpts(
-                help="An optional string field",
-                metatype=Optional[str],
-                type=str,
-                default=None,
-            ),
+            help="An optional string field",
+            type=str,
+            default=None,
         )
+    ],
+)
+
+
+@dataclasses.dataclass
+class ListOptCase(ConfigClass):
+    """Case with a list option."""
+
+    # First case has no default or default_factory so is required
+    firstlist: list[str] = simple("A list string field")
+    # Second case has a default_factory so is optional
+    secondlist: list[str] = simple(
+        "Another list string field", default_factory=list
+    )
+
+
+listoptspec = Specification(
+    ListOptCase,
+    members=[
+        ListSpecItem(
+            "firstlist",
+            help="A list string field",
+            type=str,
+        ),
+        ListSpecItem(
+            "secondlist",
+            help="Another list string field",
+            type=str,
+            default=[],
+        ),
     ],
 )
 
@@ -78,24 +111,15 @@ class PositionalOptCase(ConfigClass):
 posoptspec = Specification(
     PositionalOptCase,
     members=[
-        SpecificationItem(
+        PositionalSpecItem(
             "posfield",
-            None,
-            ArgOpts(
-                help="A positional string field",
-                metatype=str,
-                type=str,
-            ),
+            help="A positional string field",
+            type=str,
         ),
-        SpecificationItem(
+        ListPositionalSpecItem(
             "poslistfield",
-            None,
-            ArgOpts(
-                help="A positional list field",
-                metatype=list[str],
-                type=str,
-                nargs="+",
-            ),
+            help="A positional list field",
+            type=str,
         ),
     ],
 )
@@ -113,7 +137,6 @@ class PositionalAndOptionalCase(ConfigClass):
     optfield: Optional[str] = optional("An optional string field")
     poslistfield: list[str] = positional(
         "An optional positional list string field",
-        nargs="*",
         default_factory=list,
     )
 
@@ -121,53 +144,32 @@ class PositionalAndOptionalCase(ConfigClass):
 posplusoptspec = Specification(
     PositionalAndOptionalCase,
     members=[
-        SpecificationItem(
+        StandardSpecItem(
             "strfield",
-            [],
-            ArgOpts(
-                help="A simple string field",
-                metatype=str,
-                type=str,
-            ),
+            help="A simple string field",
+            type=str,
         ),
-        SpecificationItem(
+        PositionalSpecItem(
             "posfield",
-            None,
-            ArgOpts(
-                help="A positional string field",
-                metatype=str,
-                type=str,
-            ),
+            help="A positional string field",
+            type=str,
         ),
-        SpecificationItem(
+        StandardSpecItem(
             "intfield",
-            [],
-            ArgOpts(
-                help="An integer field",
-                metatype=int,
-                type=int,
-            ),
+            help="An integer field",
+            type=int,
         ),
-        SpecificationItem(
+        OptionalSpecItem(
             "optfield",
-            [],
-            ArgOpts(
-                help="An optional string field",
-                metatype=Optional[str],
-                type=str,
-                default=None,
-            ),
+            help="An optional string field",
+            type=str,
+            default=None,
         ),
-        SpecificationItem(
+        ListPositionalSpecItem(
             "poslistfield",
-            None,
-            ArgOpts(
-                help="An optional positional list string field",
-                metatype=list[str],
-                type=str,
-                nargs="*",
-                default=[],
-            ),
+            help="An optional positional list string field",
+            type=str,
+            default=[],
         ),
     ],
 )
@@ -183,42 +185,46 @@ class ChoicesOptCase(ConfigClass):
 choicesoptspec = Specification(
     ChoicesOptCase,
     members=[
-        SpecificationItem(
+        StandardSpecItem(
             "choicefield",
-            [],
-            ArgOpts(
-                help="A choice field",
-                metatype=str,
-                type=str,
-                choices=["a", "b", "c"],
-                default="a",
-            ),
+            help="A choice field",
+            type=str,
+            choices=["a", "b", "c"],
+            default="a",
         )
     ],
 )
 
 
 @dataclasses.dataclass
-class StoreTrueOptCase(ConfigClass):
+class BooleanOptCase(ConfigClass):
     """Case with a store_true option."""
 
     boolfield: bool = store_true("A boolean field")
+    negativeboolfield: bool = dataclasses.field(
+        default=True,
+        metadata={
+            CFG_METADATA_FIELD: NonPositionalConfigOpts(
+                "An awkward boolean field with a 'True' default"
+            )
+        },
+    )
 
 
 storetrueoptspec = Specification(
-    StoreTrueOptCase,
+    BooleanOptCase,
     members=[
-        SpecificationItem(
+        BoolSpecItem(
             "boolfield",
-            [],
-            ArgOpts(
-                help="A boolean field",
-                metatype=bool,
-                type=bool,
-                action="store_true",
-                default=False,
-            ),
-        )
+            help="A boolean field",
+            type=bool,
+        ),
+        BoolSpecItem(
+            "negativeboolfield",
+            help="An awkward boolean field with a 'True' default",
+            type=bool,
+            default=True,
+        ),
     ],
 )
 
@@ -235,10 +241,11 @@ class OptNameOptCase(ConfigClass):
 optnameoptspec = Specification(
     OptNameOptCase,
     members=[
-        SpecificationItem(
+        StandardSpecItem(
             "strfield",
-            ["-c", "--custom-name"],
-            ArgOpts(help="A simple string field", metatype=str, type=str),
+            help="A simple string field",
+            type=str,
+            optnames=["-c", "--custom-name"],
         )
     ],
 )
@@ -279,19 +286,17 @@ hasmutuallyexclusivegroup = Specification(
             MutuallyExclusiveGroup,
             is_mutually_exclusive=True,
             members=[
-                SpecificationItem(
-                    "opt-a",
-                    [],
-                    ArgOpts(
-                        help="Option A", metatype=int, type=int, default=0
-                    ),
+                StandardSpecItem(
+                    "opt_a",
+                    help="Option A",
+                    type=int,
+                    default=0,
                 ),
-                SpecificationItem(
-                    "opt-b",
-                    [],
-                    ArgOpts(
-                        help="Option B", metatype=int, type=int, default=0
-                    ),
+                StandardSpecItem(
+                    "opt_b",
+                    help="Option B",
+                    type=int,
+                    default=0,
                 ),
             ],
         )
@@ -305,10 +310,11 @@ hasmutuallyexclusivegroup = Specification(
 test_spec_from_class_cases = {
     "SimpleOptCase": (SimpleOptCase, simpleoptspec),
     "OptionalOptCase": (OptionalOptCase, optionaloptspec),
+    "ListOptCase": (ListOptCase, listoptspec),
     "PositionalOptCase": (PositionalOptCase, posoptspec),
     "PositionalAndOptionalCase": (PositionalAndOptionalCase, posplusoptspec),
     "ChoicesOptCase": (ChoicesOptCase, choicesoptspec),
-    "StoreTrueOptCase": (StoreTrueOptCase, storetrueoptspec),
+    "BooleanOptCase": (BooleanOptCase, storetrueoptspec),
     "OptNameOptCase": (OptNameOptCase, optnameoptspec),
     "HasSubGroupCase": (HasSubGroupCase, hassubspec),
     "HasMutuallyExclusiveGroupCase": (
@@ -328,33 +334,43 @@ def test_spec_from_class(
 ) -> None:
     """
     Test the Specification.from_class function and internally the equivalent for
-    SpecificationItem and ArgOpts.
+    SpecificationItem.
     """
     assert Specification.from_class(configcls) == expectedspec
 
 
-test_opt_to_kwargs_cases = {
+test_specitem_to_kwargs_cases = {
     "required": (
-        ArgOpts(help="is required", metatype=str, type=str),
-        False,
-        {"help": "is required", "required": True, "type": str},
+        StandardSpecItem("required", help="is required", type=str),
+        {
+            "dest": "required",
+            "help": "is required",
+            "required": True,
+            "type": str,
+        },
     ),
     "optional": (
-        ArgOpts(help="is optional", metatype=Optional[str], type=str),
-        False,
-        {"help": "is optional", "type": str},
+        OptionalSpecItem("optional", help="is optional", type=str),
+        {
+            "dest": "optional",
+            "help": "is optional",
+            "type": str,
+            "required": False,
+        },
     ),
     "positional": (
-        ArgOpts(help="is positional", metatype=str, type=str),
-        True,
+        PositionalSpecItem("pos", help="is positional", type=str),
         {"help": "is positional", "type": str},
     ),
     "choices": (
-        ArgOpts(
-            help="has choices", metatype=str, type=str, choices=["a", "b", "c"]
+        StandardSpecItem(
+            "choices",
+            help="has choices",
+            type=str,
+            choices=["a", "b", "c"],
         ),
-        False,
         {
+            "dest": "choices",
             "help": "has choices",
             "required": True,
             "choices": ["a", "b", "c"],
@@ -365,15 +381,15 @@ test_opt_to_kwargs_cases = {
 
 
 @pytest.mark.parametrize(
-    ["opt", "positional_", "expectedkwargs"],
-    test_opt_to_kwargs_cases.values(),
-    ids=test_opt_to_kwargs_cases.keys(),
+    ["specitem", "expectedkwargs"],
+    test_specitem_to_kwargs_cases.values(),
+    ids=test_specitem_to_kwargs_cases.keys(),
 )
-def test_opt_to_kwargs(
-    opt: ArgOpts, positional_: bool, expectedkwargs: dict[str, Any]
+def test_specitem_to_kwargs(
+    specitem: SpecificationItem, expectedkwargs: dict[str, Any]
 ) -> None:
-    """Test the ArgOpts.to_kwargs() method."""
-    assert opt.to_kwargs(positional_) == expectedkwargs
+    """Test the SpecificationItem.get_kwargs() method."""
+    assert specitem.get_kwargs() == expectedkwargs
 
 
 test_e2e_parser_cases = {
@@ -403,11 +419,12 @@ test_e2e_parser_cases = {
     ),
     "positional_plus_minimal": (
         posplusoptspec,
-        ["a", "--strfield", "test", "--intfield", "100"],
+        ["a", "--strfield", "test", "--intfield", "100", "X"],
         PositionalAndOptionalCase(
             posfield="a",
             strfield="test",
             intfield=100,
+            poslistfield=["X"],
         ),
     ),
     "positional_plus_complete": (
@@ -444,12 +461,17 @@ test_e2e_parser_cases = {
     "store_true_specified": (
         storetrueoptspec,
         ["--boolfield"],
-        StoreTrueOptCase(boolfield=True),
+        BooleanOptCase(boolfield=True, negativeboolfield=True),
     ),
     "store_true_not_specified": (
         storetrueoptspec,
         [],
-        StoreTrueOptCase(boolfield=False),
+        BooleanOptCase(boolfield=False, negativeboolfield=True),
+    ),
+    "store_false_specified": (
+        storetrueoptspec,
+        ["--negativeboolfield"],
+        BooleanOptCase(boolfield=False, negativeboolfield=False),
     ),
     # =========================================================================
     # Custom option name tests
@@ -462,6 +484,18 @@ test_e2e_parser_cases = {
         optnameoptspec,
         ["-c", "test"],
         OptNameOptCase(strfield="test"),
+    ),
+    # =========================================================================
+    # List tests
+    "required_list": (
+        listoptspec,
+        ["--firstlist", "A", "B", "C"],
+        ListOptCase(firstlist=["A", "B", "C"]),
+    ),
+    "optional_list": (
+        listoptspec,
+        ["--firstlist", "A", "--secondlist", "B", "C"],
+        ListOptCase(firstlist=["A"], secondlist=["B", "C"]),
     ),
     # =========================================================================
     # Subgroup tests

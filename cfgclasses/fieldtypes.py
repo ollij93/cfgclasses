@@ -1,8 +1,8 @@
 """Field types module providing helper functions for defining fields."""
 import dataclasses
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
-from .argspec import CFG_METADATA_FIELD, ConfigOpts
+from .argspec import CFG_METADATA_FIELD, ConfigOpts, NonPositionalConfigOpts
 
 __all__ = (
     "choices",
@@ -33,7 +33,7 @@ def simple(
 ) -> Any:
     """Setup a simple field with a help string and optionally a default value."""
     return _field(
-        ConfigOpts(helpstr, optnamesorpos=(optnames or False)),
+        NonPositionalConfigOpts(helpstr, optnames=optnames or []),
         default=default,
         default_factory=default_factory,
     )
@@ -46,8 +46,7 @@ def store_true(
 ) -> Any:
     """Setup a boolean field that doesn't take a value such a '--debug'."""
     return _field(
-        ConfigOpts(helpstr, optnamesorpos=(optnames or False)),
-        default=False,
+        NonPositionalConfigOpts(helpstr, optnames=optnames or []),
     )
 
 
@@ -58,7 +57,7 @@ def optional(
 ) -> Any:
     """Setup an optional field which defaults to None."""
     return _field(
-        ConfigOpts(helpstr, optnamesorpos=(optnames or False)),
+        NonPositionalConfigOpts(helpstr, optnames=optnames or []),
         default=None,
     )
 
@@ -73,8 +72,8 @@ def choices(
 ) -> Any:
     """Setup a choices field with an optional default choice."""
     return _field(
-        ConfigOpts(
-            helpstr, optnamesorpos=(optnames or False), choices=choices_
+        NonPositionalConfigOpts(
+            helpstr, optnames=optnames or [], choices=choices_
         ),
         default=default,
         default_factory=default_factory,
@@ -86,11 +85,10 @@ def positional(
     *,
     default: Any = dataclasses.MISSING,
     default_factory: Any = dataclasses.MISSING,
-    nargs: Union[int, str, None] = None,
 ) -> Any:
     """Setup a simple field with a help string and optionally a default value."""
     return _field(
-        ConfigOpts(helpstr, optnamesorpos=True, nargs=nargs),
+        ConfigOpts(helpstr),
         default=default,
         default_factory=default_factory,
     )

@@ -88,14 +88,20 @@ The ``Specification`` is built from the ``ConfigClass`` definition by using the 
     title: Specification Class Diagram
     ---
     classDiagram
+        direction LR
         namespace cfgclasses {
             class ConfigClass
             class Specification
             class SpecificationItem
-            class ArgOpts
+            class StandardSpecItem
+            class OptionalSpecItem
+            class BoolSpecItem
+            class ListSpecItem
+            class PositionalSpecItem
+            class ListPositionalSpecItem
         }
         class ConfigClass {
-            parse_args(argv: list[str]) -> ConfigClass
+            parse_args(argv: list[str]) ConfigClass
         }
         class Specification {
             metatype: Type[ConfigClass]
@@ -105,18 +111,52 @@ The ``Specification`` is built from the ``ConfigClass`` definition by using the 
         }
         class SpecificationItem {
             name: str
-            optnames: list[str]
-            opts: ArgOpts
-        }
-        class ArgOpts {
-            ...Attributes matching
-            arparse args & kwargs...
+            type: Type
+            help: str
+            metavar: str
+            choices: list
+            default: Any
+            add_to_parser(parser: argparse.ArgumentParser)
+            get_optnames() list[str]
+            get_kwargs() dict[str, Any]
+
         }
 
-        Specification o.. "1" ConfigClass: metatype
+        ConfigClass "1" ..o Specification: metatype
         Specification *-- "0..n" SpecificationItem: members
         Specification *-- "0..n" Specification: subspecs
-        SpecificationItem *-- "1" ArgOpts: opts
+
+        class StandardSpecItem {
+            optnames: list[str]
+            get_optnames() list[str]
+        }
+        SpecificationItem <|-- StandardSpecItem
+
+        class OptionalSpecItem {
+            get_kwargs() dict[str, Any]
+        }
+        StandardSpecItem <|-- OptionalSpecItem
+
+        class BoolSpecItem {
+            get_kwargs() dict[str, Any]
+        }
+        StandardSpecItem <|-- BoolSpecItem
+
+        class ListSpecItem {
+            get_kwargs() dict[str, Any]
+        }
+        StandardSpecItem <|-- ListSpecItem
+
+        class PositionalSpecItem {
+            get_optnames() list[str]
+            get_kwargs() dict[str, Any]
+        }
+        SpecificationItem <|-- PositionalSpecItem
+
+        class ListPositionalSpecItem {
+            get_kwargs() dict[str, Any]
+        }
+        PositionalSpecItem <|-- ListPositionalSpecItem
 
         %% External items
         class ToolsConfig {
@@ -124,16 +164,53 @@ The ``Specification`` is built from the ``ConfigClass`` definition by using the 
             tool_option_a: int
             tool_option_b: str
         }
-        ToolsConfig --|> ConfigClass
+        ConfigClass <|-- ToolsConfig
 
         
 
-The ``SpecificationItem`` consists of:
+The ``SpecificationItem`` is an abstract base class consisting of:
  * a name for the field
- * an optional list of option names (e.g. -d, --debug)
- * an ``ArgOpts`` instance which contains the arguments to be passed to ``argparse.ArgumentParser.add_argument()``
+ * a type for the field
+ * an optional help string for the field
+ * an optional metavar name for the field
+ * an optional list of valid choices for the field
+ * an optional default value for the field
 
-Details of the ``ArgOpts`` class are discussed later in @@@.
+It contains the the following methods:
+ * ``get_optnames()`` - returns a list of option names
+ * ``get_kwargs()`` - returns a dictionary of keyword arguments
+ * ``add_to_parser()`` - adds an argument to the given parser using the ``get_optnames()`` and ``get_kwargs()`` methods
+
+There are then several subclasses of ``SpecificationItem`` which are used to represent the different types of fields that can be defined in a ``ConfigClass``. These subclasses are:
+ * ``StandardSpecItem`` - a standard CLI argument (non-positional)
+
+   * ``OptionalSpecItem`` - an optional argument
+   * ``BoolSpecItem`` - a boolean flag such as ``--debug``
+   * ``ListSpecItem`` - an argument accepting a list of values
+
+ * ``PositionalSpecItem`` - a positional CLI argument
+
+   * ``ListPositionalSpecItem`` - a positional argument that accepts a list
+
+These classifications of arguments are based on the sets of options to argparse that are required to be set to achieve the appropriate typing and related behavior. See the following section for the details of how these options are set.
+
+2.1.1 Programmer customization
+##############################
+
+The programmer can specify the type of the field in the ``ConfigClass`` definition, and can use the ``default`` and ``default_factory`` options to control the default value given to argparse. However, to customise any other attributes for an entry, or to set an argument as positional, the ``dataclasses.field()`` metadata is used.
+
+The ``dataclasses`` metadata is an untyped dictionary stored on fields, that allows us to store any information we like on a field as well as the built-in values like defaults. ``cfgclasses`` uses a particular entry in this metadata ``cfgclasses.CFG_METADATA_FIELD`` to store a ``ConfigOpts`` or ``NonPositionalConfigOpts`` instance.
+
+These classes allow the following customization:
+ * ``help`` - the help string for the argument
+ * ``metavar`` - the 'metavar' name to display for the argument
+ * ``choices`` - the list of valid choices for the argument
+
+Additionally, the ``NonPositionalConfigOpts`` class allows the user to specify:
+ * ``optnames`` - the list of option names for the argument (e.g. ``["-d", "--debug"]``)
+
+If there is no entry in a fields metadata for ``cfgclasses.CFG_METADATA_FIELD`` then the default value of ``NonPositionalConfigOpts`` is used. If an instance of ``ConfigOpts`` is found, then the field is treated as a positional argument.
+
 
 2.2 Populating the ArgumentParser
 '''''''''''''''''''''''''''''''''
@@ -155,6 +232,7 @@ The typing considerations are:
 
    * ``nargs`` is set to ``"+"`` [#nargs]_
    * ``type`` is the inner type of the list (e.g. ``list[int] -> int``)
+   * ``required`` is set to ``True`` if ``default`` is not given
 
  * For optional types:
 
@@ -165,6 +243,7 @@ The typing considerations are:
 
    * ``action`` - the action to be taken when the argument is parsed
    * ``type`` - is not given
+   * ``required`` is not given
 
    ``action`` is set to ``store_true`` unless ``default`` is ``True`` in which case the value used is ``store_false`` [#action]_
 
