@@ -45,6 +45,11 @@ In summary, ``cfgclasses`` aims to provide the following:
 
 2. Design Overview
 ------------------
+This sections describes the high-level flow of the ``cfgclasses`` module. The subsections then go on to describe each step in the flow in greater detail including descriptions of the key classes and methods involved.
+
+2.1 High-level flow
+'''''''''''''''''''
+
 The high-level design of ``cfgclasses`` is as follows:
  * A programmer defines their tools configuration in a class inheriting from ``cfgclasses.ConfigClass`` and using the ``dataclasses.dataclass`` decorator
  * The ``ConfigClass`` class contains a ``parse_args()`` method that performs the following major steps:
@@ -78,7 +83,7 @@ The ``Specification`` class is a representation of the ``ConfigClass`` definitio
  * puts this complex logic in pure functions, further improving the testability
  * simplifies the code path for nested configuration definitions as no branching is required
 
-2.1. Building the specification
+2.2. Building the specification
 '''''''''''''''''''''''''''''''
 The ``Specification`` is built from the ``ConfigClass`` definition by using the ``dataclasses`` module to inspect the class definition and producing a ``SpecificationItem`` for each field in the class, or another ``Specification`` instance for each nested ``ConfigClass``. 
 
@@ -194,7 +199,7 @@ There are then several subclasses of ``SpecificationItem`` which are used to rep
 
 These classifications of arguments are based on the sets of options to argparse that are required to be set to achieve the appropriate typing and related behavior. See the following section for the details of how these options are set.
 
-2.1.1 Programmer customization
+2.2.1 Programmer customization
 ##############################
 
 The programmer can specify the type of the field in the ``ConfigClass`` definition, and can use the ``default`` and ``default_factory`` options to control the default value given to argparse. However, to customise any other attributes for an entry, or to set an argument as positional, the ``dataclasses.field()`` metadata is used.
@@ -212,7 +217,7 @@ Additionally, the ``NonPositionalConfigOpts`` class allows the user to specify:
 If there is no entry in a fields metadata for ``cfgclasses.CFG_METADATA_FIELD`` then the default value of ``NonPositionalConfigOpts`` is used. If an instance of ``ConfigOpts`` is found, then the field is treated as a positional argument.
 
 
-2.2 Populating the ArgumentParser
+2.3 Populating the ArgumentParser
 '''''''''''''''''''''''''''''''''
 From the ``Specification``, each member ``SpecificationItem`` is added to the ``ArgumentParser`` using ``add_argument()`` and each nested ``Specification`` is added with ``add_argument_group()``, recursively adding its own members and subspecs to this new group.
 
@@ -255,7 +260,7 @@ The typing considerations are:
 .. [#nargs] other values of ``nargs`` are not supported @@@ - why
 .. [#action] because of the naming of variables it is recommended not to True as a default value, or to override the option names to negate the flag the user must pass. E.g. ``--no-debug`` for a variable ``debug: bool = arg("Turn off debug", "--no-debug", default=True)``. Even in this example, the mis-match between the help message and the value of the variable is confusing.
 
-2.2.1 Positional options
+2.3.1 Positional options
 ########################
 ``cfgclasses`` allows the programmer to specify that any argument is positional, allowing the cli to appear as:
 
@@ -273,14 +278,14 @@ However, this is only possible for regular and ``list`` types, not for ``Optiona
 
 Finally, ``required`` cannot be specified for any positional argument created for argparse.
 
-2.3 Creating the ``ConfigClass`` from the ``argparse.Namespace``
+2.4 Creating the ``ConfigClass`` from the ``argparse.Namespace``
 ''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
 Once the ``argparse.Namespace`` has been produced it will contain attributes for all the ``SpecificationItem`` instances in the ``Specification`` and its nested subspecs. The attribute names will have been set using the ``dest`` option to ``add_argument()`` to match the name attribute of the ``SpecificationItem``. The values of these attributes will have appropriate types such that they can be directly assigned to the corresponding field in the ``ConfigClass`` definition.
 
 As such, the ``ConfigClass`` can be instantiated by iterating over the ``SpecificationItem`` instances and assigning the value of the corresponding attribute in the ``argparse.Namespace`` to the field in the ``ConfigClass``. For nested configuration, we simply need to perform this operation depth-first so that we build the nested configuration instances and assign them to the correct fields in the parent configuration instance.
 
 
-2.4 Summary
+2.5 Summary
 '''''''''''
 The ``parse_args()`` method of the ``ConfigClass`` performs the following steps:
  * Creates a ``Specification`` instance from the ``ConfigClass`` definition

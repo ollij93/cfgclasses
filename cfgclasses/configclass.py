@@ -9,6 +9,7 @@ from .configgroup import ConfigGroup, validate_post_argparse
 __all__ = (
     "ConfigClass",
     "ConfigSubmode",
+    "MutuallyExclusiveConfigClass",
 )
 
 _T = TypeVar("_T", bound="ConfigClass")
@@ -84,3 +85,14 @@ class ConfigClass(ConfigGroup):
         validate_post_argparse(toplvlcfg, parser)
         validate_post_argparse(submodecfg, parser)
         return toplvlcfg, submodecfg
+
+
+class MutuallyExclusiveConfigClass(ConfigClass):
+    """Sub-class to build mutually exclusive cfgclasses from."""
+
+    @classmethod
+    def add_argument_group(
+        cls, parser: argparse._ActionsContainer
+    ) -> argparse._ActionsContainer:
+        """Override add_argument_group to add a mutually exclusive group."""
+        return parser.add_mutually_exclusive_group()

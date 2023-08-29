@@ -7,7 +7,7 @@ import cfgclasses as cfg
 
 
 @dataclasses.dataclass
-class LogLevel(cfg.ConfigClass):
+class LogLevel(cfg.MutuallyExclusiveConfigClass):
     """Config group for specifying the log level."""
 
     debug: bool = cfg.store_true("Enable debug logging")
@@ -18,7 +18,7 @@ class LogLevel(cfg.ConfigClass):
 class Config(cfg.ConfigClass):
     """Config class for this example script."""
 
-    loglevel: LogLevel = cfg.mutually_exclusive_group()
+    loglevel: LogLevel
 
 
 def main(argv: list[str]) -> None:

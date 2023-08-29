@@ -7,8 +7,8 @@ import pytest
 
 from cfgclasses import (
     ConfigClass,
+    MutuallyExclusiveConfigClass,
     choices,
-    mutually_exclusive_group,
     optional,
     positional,
     simple,
@@ -265,7 +265,7 @@ hassubspec = Specification(
 
 
 @dataclasses.dataclass
-class MutuallyExclusiveGroup(ConfigClass):
+class MutuallyExclusiveGroup(MutuallyExclusiveConfigClass):
     """Example mutually exclusive group."""
 
     opt_a: int = simple("Option A", default=0)
@@ -276,7 +276,7 @@ class MutuallyExclusiveGroup(ConfigClass):
 class HasMutuallyExclusiveGroupCase(ConfigClass):
     """Case with a mutually exclusive subspec."""
 
-    subspec: MutuallyExclusiveGroup = mutually_exclusive_group()
+    subspec: MutuallyExclusiveGroup
 
 
 hasmutuallyexclusivegroup = Specification(
@@ -284,7 +284,6 @@ hasmutuallyexclusivegroup = Specification(
     subspecs={
         "subspec": Specification(
             MutuallyExclusiveGroup,
-            is_mutually_exclusive=True,
             members=[
                 StandardSpecItem(
                     "opt_a",

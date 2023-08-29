@@ -6,7 +6,6 @@ from .argspec import CFG_METADATA_FIELD, ConfigOpts, NonPositionalConfigOpts
 
 __all__ = (
     "choices",
-    "mutually_exclusive_group",
     "optional",
     "positional",
     "simple",
@@ -92,13 +91,3 @@ def positional(
         default=default,
         default_factory=default_factory,
     )
-
-
-# ==============================================================================
-# Utilities for specifiying subgroups
-# ==============================================================================
-
-
-def mutually_exclusive_group() -> Any:
-    """Setup a mutually exclusive group."""
-    return dataclasses.field(metadata={"mutually_exclusive": True})

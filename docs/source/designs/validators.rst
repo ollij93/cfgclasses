@@ -1,6 +1,9 @@
 Validators
 ==========
 
+1. Feature overview
+-------------------
+
 The validators feature allows the programmer to define a validation function that runs after the ConfigClass is initialized. The validation functions can raise ValueError's in cases of invalid configuration being specified which result in calls to ``argparse.ArgumentParser.error()`` result in nicely formatted errors for the user including the tools usage message and a non-zero exit code.
 
 The default implementation of ``ConfigClass.validate()`` is a no-op and can be freely overriden by the programmer.
@@ -55,7 +58,7 @@ Example runs:
     usage: foo.py [-h] --item {shirt,socks} --colour COLOUR
     foo.py: error: shirt is not available in blue
 
-1. Design ammendments
+2. Design ammendments
 ---------------------
 The following additions are made to the primary design:
  * The ``ConfigClass`` class has a new method ``validate()`` which has a no-op implementation.

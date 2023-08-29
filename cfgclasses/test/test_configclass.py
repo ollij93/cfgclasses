@@ -6,7 +6,7 @@ import pytest
 from cfgclasses import (
     ConfigClass,
     ConfigSubmode,
-    mutually_exclusive_group,
+    MutuallyExclusiveConfigClass,
     simple,
     store_true,
 )
@@ -16,7 +16,7 @@ def test_mutually_exclusive() -> None:
     """Test the use of mutually exclusive groups."""
 
     @dataclasses.dataclass
-    class MEGroupConfig(ConfigClass):
+    class MEGroupConfig(MutuallyExclusiveConfigClass):
         """Config for mutually exclusive options relating to A."""
 
         anum: int = simple("A simple integer field", default=0)
@@ -26,7 +26,7 @@ def test_mutually_exclusive() -> None:
     class TopLevelConfig(ConfigClass):
         """Top level config class containing the mutually exclusive group."""
 
-        a_opts: MEGroupConfig = mutually_exclusive_group()
+        a_opts: MEGroupConfig
 
     # Check the indiviual fields can be set
     assert TopLevelConfig.parse_args(

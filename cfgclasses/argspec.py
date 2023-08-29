@@ -313,8 +313,6 @@ class Specification(Generic[_ConfigGroupT]):
         List of SpecificationItems for the members of this group.
     .. attribute:: subspecs
         Mapping of spec names to Specification for any subspecs of this spec.
-    .. attribute:: is_mutually_exclusive
-        Whether this group is mutually exclusive.
     """
 
     metatype: Type[_ConfigGroupT]
@@ -322,21 +320,17 @@ class Specification(Generic[_ConfigGroupT]):
     subspecs: dict[str, "Specification[Any]"] = dataclasses.field(
         default_factory=dict
     )
-    is_mutually_exclusive: bool = dataclasses.field(default=False)
 
     @staticmethod
     def from_class(
-        metatype: Type[_ConfigGroupT], is_mutually_exclusive: bool = False
+        metatype: Type[_ConfigGroupT],
     ) -> "Specification[_ConfigGroupT]":
         """Instantiate an instance of this class from the ConfigGroup class"""
-        spec = Specification(
-            metatype, is_mutually_exclusive=is_mutually_exclusive
-        )
+        spec = Specification(metatype)
         for field in dataclasses.fields(metatype):
             if _is_configcls(field.type):
                 spec.subspecs[field.name] = Specification.from_class(
-                    field.type,
-                    field.metadata.get("mutually_exclusive", False),
+                    field.type
                 )
             else:
                 spec.members.append(specitem_from_field(field))
@@ -344,12 +338,7 @@ class Specification(Generic[_ConfigGroupT]):
 
     def add_to_parser(self, parser: argparse._ActionsContainer) -> None:
         """Add this argument group to the given parser."""
-        group: argparse._ActionsContainer
-        if self.is_mutually_exclusive:
-            group = parser.add_mutually_exclusive_group()
-        else:
-            group = parser.add_argument_group()
-
+        group = self.metatype.add_argument_group(parser)
         for member in self.members:
             member.add_to_parser(group)
         for subspec in self.subspecs.values():
