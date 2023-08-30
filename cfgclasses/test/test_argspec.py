@@ -5,16 +5,17 @@ from typing import Any, Optional, Sequence, Type
 
 import pytest
 
-from cfgclasses import (
-    ConfigClass,
-    choices,
-    mutually_exclusive_group,
-    optional,
-    positional,
-    simple,
-    store_true,
+from cfgclasses import ConfigClass, MutuallyExclusiveConfigClass, arg, optional
+from cfgclasses.argspec import (
+    BoolSpecItem,
+    ListPositionalSpecItem,
+    ListSpecItem,
+    OptionalSpecItem,
+    PositionalSpecItem,
+    Specification,
+    SpecificationItem,
+    StandardSpecItem,
 )
-from cfgclasses.argspec import ArgGroup, ArgOpts, ArgSpec, ArgSubGroup
 
 
 # =============================================================================
@@ -24,18 +25,18 @@ from cfgclasses.argspec import ArgGroup, ArgOpts, ArgSpec, ArgSubGroup
 class SimpleOptCase(ConfigClass):
     """Case with a simple required option."""
 
-    strfield: str = simple("A simple string field")
+    strfield: str = arg("A simple string field")
 
 
-simpleoptgroup = ArgGroup(
+simpleoptspec = Specification(
+    SimpleOptCase,
     members=[
-        ArgSpec(
+        StandardSpecItem(
             "strfield",
-            "A simple string field",
-            ["--strfield"],
-            ArgOpts(required=True, type=str),
+            help="A simple string field",
+            type=str,
         )
-    ]
+    ],
 )
 
 
@@ -46,15 +47,46 @@ class OptionalOptCase(ConfigClass):
     optfield: Optional[str] = optional("An optional string field")
 
 
-optionaloptgroup = ArgGroup(
+optionaloptspec = Specification(
+    OptionalOptCase,
     members=[
-        ArgSpec(
+        OptionalSpecItem(
             "optfield",
-            "An optional string field",
-            ["--optfield"],
-            ArgOpts(default=None, required=False, type=str),
+            help="An optional string field",
+            type=str,
+            default=None,
         )
-    ]
+    ],
+)
+
+
+@dataclasses.dataclass
+class ListOptCase(ConfigClass):
+    """Case with a list option."""
+
+    # First case has no default or default_factory so is required
+    firstlist: list[str] = arg("A list string field")
+    # Second case has a default_factory so is optional
+    secondlist: list[str] = arg(
+        "Another list string field", default_factory=list
+    )
+
+
+listoptspec = Specification(
+    ListOptCase,
+    members=[
+        ListSpecItem(
+            "firstlist",
+            help="A list string field",
+            type=str,
+        ),
+        ListSpecItem(
+            "secondlist",
+            help="Another list string field",
+            type=str,
+            default=[],
+        ),
+    ],
 )
 
 
@@ -62,25 +94,24 @@ optionaloptgroup = ArgGroup(
 class PositionalOptCase(ConfigClass):
     """Case with a positional option."""
 
-    posfield: str = positional("A positional string field")
-    poslistfield: list[str] = positional("A positional list field")
+    posfield: str = arg("A positional string field", positional=True)
+    poslistfield: list[str] = arg("A positional list field", positional=True)
 
 
-posoptgroup = ArgGroup(
+posoptspec = Specification(
+    PositionalOptCase,
     members=[
-        ArgSpec(
+        PositionalSpecItem(
             "posfield",
-            "A positional string field",
-            ["posfield"],
-            ArgOpts(type=str),
+            help="A positional string field",
+            type=str,
         ),
-        ArgSpec(
+        ListPositionalSpecItem(
             "poslistfield",
-            "A positional list field",
-            ["poslistfield"],
-            ArgOpts(type=str, nargs="+"),
+            help="A positional list field",
+            type=str,
         ),
-    ]
+    ],
 )
 
 
@@ -90,50 +121,48 @@ posoptgroup = ArgGroup(
 class PositionalAndOptionalCase(ConfigClass):
     """Case with a combination of positional and optional options."""
 
-    strfield: str = simple("A simple string field")
-    posfield: str = positional("A positional string field")
-    intfield: int = simple("An integer field")
+    strfield: str = arg("A simple string field")
+    posfield: str = arg("A positional string field", positional=True)
+    intfield: int = arg("An integer field")
     optfield: Optional[str] = optional("An optional string field")
-    poslistfield: list[str] = positional(
+    poslistfield: list[str] = arg(
         "An optional positional list string field",
-        nargs="*",
+        positional=True,
         default_factory=list,
     )
 
 
-posplusoptgroup = ArgGroup(
+posplusoptspec = Specification(
+    PositionalAndOptionalCase,
     members=[
-        ArgSpec(
+        StandardSpecItem(
             "strfield",
-            "A simple string field",
-            ["--strfield"],
-            ArgOpts(required=True, type=str),
+            help="A simple string field",
+            type=str,
         ),
-        ArgSpec(
+        PositionalSpecItem(
             "posfield",
-            "A positional string field",
-            ["posfield"],
-            ArgOpts(type=str),
+            help="A positional string field",
+            type=str,
         ),
-        ArgSpec(
+        StandardSpecItem(
             "intfield",
-            "An integer field",
-            ["--intfield"],
-            ArgOpts(required=True, type=int),
+            help="An integer field",
+            type=int,
         ),
-        ArgSpec(
+        OptionalSpecItem(
             "optfield",
-            "An optional string field",
-            ["--optfield"],
-            ArgOpts(default=None, required=False, type=str),
+            help="An optional string field",
+            type=str,
+            default=None,
         ),
-        ArgSpec(
+        ListPositionalSpecItem(
             "poslistfield",
-            "An optional positional list string field",
-            ["poslistfield"],
-            ArgOpts(type=str, nargs="*", default=[]),
+            help="An optional positional list string field",
+            type=str,
+            default=[],
         ),
-    ]
+    ],
 )
 
 
@@ -141,37 +170,51 @@ posplusoptgroup = ArgGroup(
 class ChoicesOptCase(ConfigClass):
     """Case with a choices option."""
 
-    choicefield: str = choices("A choice field", ["a", "b", "c"], default="a")
+    choicefield: str = arg(
+        "A choice field", choices=["a", "b", "c"], default="a"
+    )
 
 
-choicesoptgroup = ArgGroup(
+choicesoptspec = Specification(
+    ChoicesOptCase,
     members=[
-        ArgSpec(
+        StandardSpecItem(
             "choicefield",
-            "A choice field",
-            ["--choicefield"],
-            ArgOpts(type=str, choices=["a", "b", "c"], default="a"),
+            help="A choice field",
+            type=str,
+            choices=["a", "b", "c"],
+            default="a",
         )
-    ]
+    ],
 )
 
 
 @dataclasses.dataclass
-class StoreTrueOptCase(ConfigClass):
+class BooleanOptCase(ConfigClass):
     """Case with a store_true option."""
 
-    boolfield: bool = store_true("A boolean field")
+    boolfield: bool = arg("A boolean field")
+    negativeboolfield: bool = arg(
+        "An awkward boolean field with a 'True' default",
+        default=True,
+    )
 
 
-storetrueoptgroup = ArgGroup(
+storetrueoptspec = Specification(
+    BooleanOptCase,
     members=[
-        ArgSpec(
+        BoolSpecItem(
             "boolfield",
-            "A boolean field",
-            ["--boolfield"],
-            ArgOpts(action="store_true", default=False),
-        )
-    ]
+            help="A boolean field",
+            type=bool,
+        ),
+        BoolSpecItem(
+            "negativeboolfield",
+            help="An awkward boolean field with a 'True' default",
+            type=bool,
+            default=True,
+        ),
+    ],
 )
 
 
@@ -179,89 +222,87 @@ storetrueoptgroup = ArgGroup(
 class OptNameOptCase(ConfigClass):
     """Case with a custom option name."""
 
-    strfield: str = simple(
-        "A simple string field", optnames=["-c", "--custom-name"]
-    )
+    strfield: str = arg("A simple string field", "-c", "--custom-name")
 
 
-optnameoptgroup = ArgGroup(
+optnameoptspec = Specification(
+    OptNameOptCase,
     members=[
-        ArgSpec(
+        StandardSpecItem(
             "strfield",
-            "A simple string field",
-            ["-c", "--custom-name"],
-            ArgOpts(required=True, type=str),
+            help="A simple string field",
+            type=str,
+            optnames=["-c", "--custom-name"],
         )
-    ]
+    ],
 )
 
 
 @dataclasses.dataclass
 class HasSubGroupCase(ConfigClass):
-    """Case with a subgroup."""
+    """Case with a subspec."""
 
-    subgroup: SimpleOptCase = dataclasses.field()
+    subspec: SimpleOptCase = dataclasses.field()
 
 
-hassubgroup = ArgGroup(
-    subgroups=[ArgSubGroup("subgroup", SimpleOptCase, simpleoptgroup)],
+hassubspec = Specification(
+    HasSubGroupCase,
+    subspecs={"subspec": simpleoptspec},
 )
 
 
 @dataclasses.dataclass
-class MutuallyExclusiveGroup(ConfigClass):
+class MutuallyExclusiveGroup(MutuallyExclusiveConfigClass):
     """Example mutually exclusive group."""
 
-    opt_a: int = simple("Option A", default=0)
-    opt_b: int = simple("Option B", default=0)
+    opt_a: int = arg("Option A", default=0)
+    opt_b: int = arg("Option B", default=0)
 
 
 @dataclasses.dataclass
 class HasMutuallyExclusiveGroupCase(ConfigClass):
-    """Case with a mutually exclusive subgroup."""
+    """Case with a mutually exclusive subspec."""
 
-    subgroup: MutuallyExclusiveGroup = mutually_exclusive_group()
+    subspec: MutuallyExclusiveGroup
 
 
-hasmutuallyexclusivegroup = ArgGroup(
-    subgroups=[
-        ArgSubGroup(
-            "subgroup",
+hasmutuallyexclusivegroup = Specification(
+    HasMutuallyExclusiveGroupCase,
+    subspecs={
+        "subspec": Specification(
             MutuallyExclusiveGroup,
-            ArgGroup(
-                is_mutually_exclusive=True,
-                members=[
-                    ArgSpec(
-                        "opt-a",
-                        "Option A",
-                        ["--opt-a"],
-                        ArgOpts(type=int, default=0),
-                    ),
-                    ArgSpec(
-                        "opt-b",
-                        "Option B",
-                        ["--opt-b"],
-                        ArgOpts(type=int, default=0),
-                    ),
-                ],
-            ),
+            members=[
+                StandardSpecItem(
+                    "opt_a",
+                    help="Option A",
+                    type=int,
+                    default=0,
+                ),
+                StandardSpecItem(
+                    "opt_b",
+                    help="Option B",
+                    type=int,
+                    default=0,
+                ),
+            ],
         )
-    ]
+    },
 )
 
 # =============================================================================
 # Test cases
 # =============================================================================
 
-test_group_from_class_cases = {
-    "SimpleOptCase": (SimpleOptCase, simpleoptgroup),
-    "OptionalOptCase": (OptionalOptCase, optionaloptgroup),
-    "PositionalOptCase": (PositionalOptCase, posoptgroup),
-    "PositionalAndOptionalCase": (PositionalAndOptionalCase, posplusoptgroup),
-    "ChoicesOptCase": (ChoicesOptCase, choicesoptgroup),
-    "StoreTrueOptCase": (StoreTrueOptCase, storetrueoptgroup),
-    "OptNameOptCase": (OptNameOptCase, optnameoptgroup),
-    "HasSubGroupCase": (HasSubGroupCase, hassubgroup),
+test_spec_from_class_cases = {
+    "SimpleOptCase": (SimpleOptCase, simpleoptspec),
+    "OptionalOptCase": (OptionalOptCase, optionaloptspec),
+    "ListOptCase": (ListOptCase, listoptspec),
+    "PositionalOptCase": (PositionalOptCase, posoptspec),
+    "PositionalAndOptionalCase": (PositionalAndOptionalCase, posplusoptspec),
+    "ChoicesOptCase": (ChoicesOptCase, choicesoptspec),
+    "BooleanOptCase": (BooleanOptCase, storetrueoptspec),
+    "OptNameOptCase": (OptNameOptCase, optnameoptspec),
+    "HasSubGroupCase": (HasSubGroupCase, hassubspec),
     "HasMutuallyExclusiveGroupCase": (
         HasMutuallyExclusiveGroupCase,
         hasmutuallyexclusivegroup,
@@ -270,81 +311,110 @@ test_group_from_class_cases = {
 
 
 @pytest.mark.parametrize(
-    ["configcls", "expectedgroup"],
-    test_group_from_class_cases.values(),
-    ids=test_group_from_class_cases.keys(),
+    ["configcls", "expectedspec"],
+    test_spec_from_class_cases.values(),
+    ids=test_spec_from_class_cases.keys(),
 )
-def test_group_from_class(
-    configcls: Type[ConfigClass], expectedgroup: ArgGroup
+def test_spec_from_class(
+    configcls: Type[ConfigClass], expectedspec: Specification[ConfigClass]
 ) -> None:
     """
-    Test the ArgGroup.from_class function and internally the equivalent for
-    ArgSpec and ArgOpts.
+    Test the Specification.from_class function and internally the equivalent for
+    SpecificationItem.
     """
-    assert ArgGroup.from_class(configcls) == expectedgroup
+    assert Specification.from_class(configcls) == expectedspec
 
 
-test_opt_to_kwargs_cases = {
-    "empty": (ArgOpts(), {}),
-    "simple": (
-        ArgOpts(required=True, type=str),
-        {"required": True, "type": str},
+test_specitem_to_kwargs_cases = {
+    "required": (
+        StandardSpecItem("required", help="is required", type=str),
+        {
+            "dest": "required",
+            "help": "is required",
+            "required": True,
+            "type": str,
+        },
+    ),
+    "optional": (
+        OptionalSpecItem("optional", help="is optional", type=str),
+        {
+            "dest": "optional",
+            "help": "is optional",
+            "type": str,
+            "required": False,
+        },
+    ),
+    "positional": (
+        PositionalSpecItem("pos", help="is positional", type=str),
+        {"help": "is positional", "type": str},
     ),
     "choices": (
-        ArgOpts(choices=["a", "b", "c"]),
-        {"choices": ["a", "b", "c"]},
+        StandardSpecItem(
+            "choices",
+            help="has choices",
+            type=str,
+            choices=["a", "b", "c"],
+        ),
+        {
+            "dest": "choices",
+            "help": "has choices",
+            "required": True,
+            "choices": ["a", "b", "c"],
+            "type": str,
+        },
     ),
 }
 
 
 @pytest.mark.parametrize(
-    ["opt", "expectedkwargs"],
-    test_opt_to_kwargs_cases.values(),
-    ids=test_opt_to_kwargs_cases.keys(),
+    ["specitem", "expectedkwargs"],
+    test_specitem_to_kwargs_cases.values(),
+    ids=test_specitem_to_kwargs_cases.keys(),
 )
-def test_opt_to_kwargs(opt: ArgOpts, expectedkwargs: dict[str, Any]) -> None:
-    """Test the ArgOpts.to_kwargs() method."""
-    assert opt.to_kwargs() == expectedkwargs
+def test_specitem_to_kwargs(
+    specitem: SpecificationItem, expectedkwargs: dict[str, Any]
+) -> None:
+    """Test the SpecificationItem.get_kwargs() method."""
+    assert specitem.get_kwargs() == expectedkwargs
 
 
 test_e2e_parser_cases = {
     "simple": (
-        simpleoptgroup,
+        simpleoptspec,
         ["--strfield", "test"],
-        {"strfield": "test"},
+        SimpleOptCase(strfield="test"),
     ),
     # =========================================================================
     # Optional argument tests
     "optional_specified": (
-        optionaloptgroup,
+        optionaloptspec,
         ["--optfield", "test"],
-        {"optfield": "test"},
+        OptionalOptCase(optfield="test"),
     ),
     "optional_not_specified": (
-        optionaloptgroup,
+        optionaloptspec,
         [],
-        {"optfield": None},
+        OptionalOptCase(optfield=None),
     ),
     # =========================================================================
     # Positional tests
     "positional": (
-        posoptgroup,
+        posoptspec,
         ["a", "B1", "B2"],
-        {"posfield": "a", "poslistfield": ["B1", "B2"]},
+        PositionalOptCase(posfield="a", poslistfield=["B1", "B2"]),
     ),
     "positional_plus_minimal": (
-        posplusoptgroup,
-        ["a", "--strfield", "test", "--intfield", "100"],
-        {
-            "posfield": "a",
-            "strfield": "test",
-            "intfield": 100,
-            "optfield": None,
-            "poslistfield": [],
-        },
+        posplusoptspec,
+        ["a", "--strfield", "test", "--intfield", "100", "X"],
+        PositionalAndOptionalCase(
+            posfield="a",
+            strfield="test",
+            intfield=100,
+            poslistfield=["X"],
+        ),
     ),
     "positional_plus_complete": (
-        posplusoptgroup,
+        posplusoptspec,
         [
             "--strfield",
             "test",
@@ -357,85 +427,110 @@ test_e2e_parser_cases = {
             "Y",
             "Z",
         ],
-        {
-            "strfield": "test",
-            "intfield": 100,
-            "optfield": "test",
-            "posfield": "a",
-            "poslistfield": ["X", "Y", "Z"],
-        },
+        PositionalAndOptionalCase(
+            strfield="test",
+            intfield=100,
+            optfield="test",
+            posfield="a",
+            poslistfield=["X", "Y", "Z"],
+        ),
     ),
     # =========================================================================
     # Choices tests
     "choices": (
-        choicesoptgroup,
+        choicesoptspec,
         ["--choicefield", "a"],
-        {"choicefield": "a"},
+        ChoicesOptCase(choicefield="a"),
     ),
     # =========================================================================
     # Boolean tests
     "store_true_specified": (
-        storetrueoptgroup,
+        storetrueoptspec,
         ["--boolfield"],
-        {"boolfield": True},
+        BooleanOptCase(boolfield=True, negativeboolfield=True),
     ),
     "store_true_not_specified": (
-        storetrueoptgroup,
+        storetrueoptspec,
         [],
-        {"boolfield": False},
+        BooleanOptCase(boolfield=False, negativeboolfield=True),
+    ),
+    "store_false_specified": (
+        storetrueoptspec,
+        ["--negativeboolfield"],
+        BooleanOptCase(boolfield=False, negativeboolfield=False),
     ),
     # =========================================================================
     # Custom option name tests
     "custom_optname": (
-        optnameoptgroup,
+        optnameoptspec,
         ["--custom-name", "test"],
-        {"strfield": "test"},
+        OptNameOptCase(strfield="test"),
     ),
     "custom_optname_short": (
-        optnameoptgroup,
+        optnameoptspec,
         ["-c", "test"],
-        {"strfield": "test"},
+        OptNameOptCase(strfield="test"),
+    ),
+    # =========================================================================
+    # List tests
+    "required_list": (
+        listoptspec,
+        ["--firstlist", "A", "B", "C"],
+        ListOptCase(firstlist=["A", "B", "C"]),
+    ),
+    "optional_list": (
+        listoptspec,
+        ["--firstlist", "A", "--secondlist", "B", "C"],
+        ListOptCase(firstlist=["A"], secondlist=["B", "C"]),
     ),
     # =========================================================================
     # Subgroup tests
     "has_subgroup": (
-        hassubgroup,
+        hassubspec,
         ["--strfield", "test"],
-        {"subgroup": SimpleOptCase(strfield="test")},
+        HasSubGroupCase(subspec=SimpleOptCase(strfield="test")),
     ),
     # =========================================================================
     # Mutually exclusive group tests
     "has_mutually_exclusive_group_NULL": (
         hasmutuallyexclusivegroup,
         [],
-        {"subgroup": MutuallyExclusiveGroup(opt_a=0, opt_b=0)},
+        HasMutuallyExclusiveGroupCase(
+            subspec=MutuallyExclusiveGroup(opt_a=0, opt_b=0)
+        ),
     ),
     "has_mutually_exclusive_group_A": (
         hasmutuallyexclusivegroup,
         ["--opt-a", "1"],
-        {"subgroup": MutuallyExclusiveGroup(opt_a=1, opt_b=0)},
+        HasMutuallyExclusiveGroupCase(
+            subspec=MutuallyExclusiveGroup(opt_a=1, opt_b=0)
+        ),
     ),
     "has_mutually_exclusive_group_B": (
         hasmutuallyexclusivegroup,
         ["--opt-b", "1"],
-        {"subgroup": MutuallyExclusiveGroup(opt_a=0, opt_b=1)},
+        HasMutuallyExclusiveGroupCase(
+            subspec=MutuallyExclusiveGroup(opt_a=0, opt_b=1)
+        ),
     ),
 }
 
 
 @pytest.mark.parametrize(
-    ["group", "args", "expectedkwargs"],
+    ["spec", "args", "expectedconfig"],
     test_e2e_parser_cases.values(),
     ids=test_e2e_parser_cases.keys(),
 )
 def test_e2e_parser(
-    group: ArgGroup, args: Sequence[str], expectedkwargs: dict[str, Any]
+    spec: Specification[ConfigClass],
+    args: Sequence[str],
+    expectedconfig: ConfigClass,
 ) -> None:
     """
-    Test the ArgGroup.add_to_parser() and
-    ArgGroup.extract_args_from_namespace() methods together.
+    Test the Specification.add_to_parser() and
+    Specification.extract_args_from_namespace() methods together.
     """
     parser = argparse.ArgumentParser()
-    group.add_to_parser(parser)
+    spec.add_to_parser(parser)
     namespace = parser.parse_args(args)
-    assert group.extract_args_from_namespace(namespace) == expectedkwargs
+    assert spec.construct_from_namespace(namespace) == expectedconfig

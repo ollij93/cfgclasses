@@ -9,6 +9,17 @@ class ConfigGroup:
     Class for wrapping a set of config options to build cfgclasses from.
     """
 
+    @classmethod
+    def add_argument_group(
+        cls, parser: argparse._ActionsContainer
+    ) -> argparse._ActionsContainer:
+        """
+        Add an argument group to the given parser.
+
+        The added group will have the fields of this class added to it.
+        """
+        return parser.add_argument_group()
+
     def validate(self) -> None:
         """
         Validate the config class instance raising a ValueError if invalid.

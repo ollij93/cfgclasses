@@ -3,30 +3,24 @@ import dataclasses
 
 import pytest
 
-from cfgclasses import (
-    ConfigClass,
-    ConfigSubmode,
-    mutually_exclusive_group,
-    simple,
-    store_true,
-)
+from cfgclasses import ConfigClass, MutuallyExclusiveConfigClass, arg
 
 
 def test_mutually_exclusive() -> None:
     """Test the use of mutually exclusive groups."""
 
     @dataclasses.dataclass
-    class MEGroupConfig(ConfigClass):
+    class MEGroupConfig(MutuallyExclusiveConfigClass):
         """Config for mutually exclusive options relating to A."""
 
-        anum: int = simple("A simple integer field", default=0)
-        apple: str = simple("A simple string field", default="no")
+        anum: int = arg("A simple integer field", default=0)
+        apple: str = arg("A simple string field", default="no")
 
     @dataclasses.dataclass
     class TopLevelConfig(ConfigClass):
         """Top level config class containing the mutually exclusive group."""
 
-        a_opts: MEGroupConfig = mutually_exclusive_group()
+        a_opts: MEGroupConfig
 
     # Check the indiviual fields can be set
     assert TopLevelConfig.parse_args(
@@ -47,21 +41,24 @@ def test_submodes() -> None:
     class SubmodeA(ConfigClass):
         """Config for the submode A."""
 
-        anum: int = simple("A simple integer field")
+        anum: int = arg("A simple integer field")
 
     @dataclasses.dataclass
     class SubmodeB(ConfigClass):
         """Config for the submode B."""
 
-        bnum: int = simple("A simple integer field")
+        bnum: int = arg("A simple integer field")
 
     @dataclasses.dataclass
     class TopLevelConfig(ConfigClass):
         """Top level config class containing the submodes."""
 
-        debug: bool = store_true("Enable debug mode")
+        debug: bool = arg("Enable debug mode")
 
-    submodes = [ConfigSubmode("a", SubmodeA), ConfigSubmode("b", SubmodeB)]
+    submodes = {
+        "a": SubmodeA,
+        "b": SubmodeB,
+    }
 
     # Check successful specification of submode A
     assert TopLevelConfig.parse_args_with_submodes(
@@ -95,7 +92,7 @@ def test_validation_simple() -> None:
     class ValidationConfig(ConfigClass):
         """Config for the validation tests."""
 
-        anum: int = simple("A simple integer field")
+        anum: int = arg("A simple integer field")
 
         def validate(self) -> None:
             """Validate the config class instance raising a ValueError if invalid."""
@@ -119,7 +116,7 @@ def test_validation_nested() -> None:
     class ValidationConfig(ConfigClass):
         """Config for the validation tests."""
 
-        anum: int = simple("A simple integer field")
+        anum: int = arg("A simple integer field")
 
         def validate(self) -> None:
             """Validate the config class instance raising a ValueError if invalid."""

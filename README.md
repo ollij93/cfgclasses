@@ -30,23 +30,23 @@ pip install cfgclasses
 The following shows a simple script setup using a Config Class.
 
 ```python3
-import cfgclasses as cfg
 import dataclasses
 import sys
+from cfgclasses import ConfigClass, arg, optional
 from pathlib import Path
 from typing import Optional
 
 @dataclasses.dataclass
-class Config(cfg.ConfigClass):
+class Config(ConfigClass):
     # Simple options are required on the CLI
-    intopt: int = cfg.simple("A simple integer field")
-    inpath: Path = cfg.simple("A required Path field")
+    intopt: int = arg("A simple integer field")
+    inpath: Path = arg("A required Path field")
 
     # Optional fields default to None when not specified
-    outpath: Optional[Path] = cfg.optional("An optional Path field")
+    outpath: Optional[Path] = optional("An optional Path field")
 
     # Can specify custom default or default_factory values
-    stropt: str = cfg.simple("A string field with a default", default="X")
+    stropt: str = arg("A string field with a default", default="X")
 
     # The authors preference is to put run modes on the config classes.
     # This is entirely optional, and main() methods that take in the Config

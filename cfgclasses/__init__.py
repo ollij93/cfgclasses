@@ -1,8 +1,42 @@
-"""Importable contents of this package."""
+"""
+cfgclasses are representations of a python tools CLI configuration options
+built on `dataclasses <https://docs.python.org/3/library/dataclasses.html>`_. This
+allows individual tools to focus on specifying their configuration structure
+without the overhead of interacting with argparse and the typeless Namespace it
+returns.
 
-from . import configclass, fieldtypes
+The primary entrypoint for this module is :class:`cfgclasses.ConfigClass` and
+its ``parse_args()`` classmethod.
 
-__all__ = configclass.__all__ + fieldtypes.__all__
+.. autoclass:: cfgclasses.ConfigClass
+    :members:
+.. autoclass:: cfgclasses.MutuallyExclusiveConfigClass
+    :members:
 
+Additionally the following functions are provided to simplify the creation of
+the class fields.
+
+.. autofunction:: cfgclasses.arg
+.. autofunction:: cfgclasses.optional
+
+At a lower level these functions instantiate these classes and add them to the
+``dataclasses.field()`` metadata in the key ``cfgclasses.CFG_METADATA_FIELD``.
+
+.. autodata:: cfgclasses.argspec.CFG_METADATA_FIELD
+
+.. autoclass:: cfgclasses.ConfigOpts
+.. autoclass:: cfgclasses.NonPositionalConfigOpts
+
+"""
+
+from . import arghelper, argspec, configclass
+
+__all__ = (
+    *arghelper.__all__,
+    *argspec.__all__,
+    *configclass.__all__,
+)
+
+from .arghelper import *
+from .argspec import *
 from .configclass import *
-from .fieldtypes import *
