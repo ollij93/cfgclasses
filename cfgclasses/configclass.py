@@ -19,9 +19,6 @@ _U = TypeVar("_U", bound="ConfigClass")
 class ConfigClass(ConfigGroup):
     """
     Base class to build cfgclasses from.
-
-    .. automethod:: parse_args
-    .. automethod:: parse_args_with_submodes
     """
 
     @classmethod

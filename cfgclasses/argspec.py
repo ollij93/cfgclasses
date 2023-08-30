@@ -16,34 +16,29 @@ from typing import (
 
 from .configgroup import ConfigGroup
 
+__all__ = (
+    "CFG_METADATA_FIELD",
+    "ConfigOpts",
+    "NonPositionalConfigOpts",
+)
+
+#:Key in the dataclasses field metadata to store the ConfigOpts in.
 CFG_METADATA_FIELD = "cfgclasses.configopts"
 
 _T = TypeVar("_T")
 _ConfigGroupT = TypeVar("_ConfigGroupT", bound=ConfigGroup)
 
 
-# If custom optnames are specified, they can be specified as a list of strings
-# otherwise this is a boolean indicating whether the argument is positional
-# (If positional, optnames cannot be specified so if this is a list the argument
-# is not positional)
-OptNamesOrPos = Union[list[str], bool]
-
-
 @dataclasses.dataclass
 class ConfigOpts:
     """
     Data stored in a dataclass field's metadata for customizing CLI options.
-
-    ..attribute:: help
-        Help string for the argument.
-    ..attribute:: metavar
-        Name to display for the argument in usage messages.
-    ..attribute:: choices
-        List of valid choices for the argument.
     """
-
+    #: Help string for the argument.
     help: str = dataclasses.field(default="")
+    #: Name to display for the argument in usage messages.
     metavar: Optional[str] = dataclasses.field(default=None)
+    #: List of valid choices for the argument.
     choices: Optional[Iterable[Any]] = dataclasses.field(default=None)
 
 
@@ -51,11 +46,8 @@ class ConfigOpts:
 class NonPositionalConfigOpts(ConfigOpts):
     """
     Config options for a non-positional argument.
-
-    ..attribute:: optnames
-        List of alternative names (such as -f or --force) for the argument.
     """
-
+    #: List of alternative names (such as ``["-f", "--force"]``) for the argument.
     optnames: list[str] = dataclasses.field(default_factory=list)
 
 
@@ -90,16 +82,19 @@ class SpecificationItem(abc.ABC):
     """
     Specification for a single argument to be passed to
     argparse.ArgumentParser.add_argument().
-
-    ..attribute:: name
-        Name of the argument used as "--name" on the command line.
     """
 
+    #: Name of the argument used as "--name" on the command line.
     name: str
+    #: Type the argument should be converted to by argparse.
     type: Type[Any]
+    #: Help string to display for the argument.
     help: str = dataclasses.field(default="")
+    #: Metavar to display for the argument in the help message.
     metavar: Optional[str] = dataclasses.field(default=None)
+    #: List of valid choices for the argument.
     choices: Optional[Iterable[Any]] = dataclasses.field(default=None)
+    #: Default value for the argument if not provided on the CLI.
     default: Any | NotSpecified = dataclasses.field(
         default_factory=NotSpecified
     )
@@ -145,13 +140,11 @@ class SpecificationItem(abc.ABC):
 class StandardSpecItem(SpecificationItem):
     """
     A non-positional argument specification item.
-
-    .. attribute:: optnames
-        List of alternative names (such as -f or --force) for the argument.
-        If an empty list the name of the specification item is used with any
-        underscores replaced with hyphens.
     """
 
+    #: List of alternative names (such as -f or --force) for the argument.
+    #: If an empty list the name of the specification item is used with any
+    #: underscores replaced with hyphens.
     optnames: list[str] = dataclasses.field(default_factory=list)
 
     @classmethod
@@ -306,17 +299,12 @@ class Specification(Generic[_ConfigGroupT]):
     This specification maps to an ArgumentGroup in argparse, each member
     SpecificationItem a call to add_argument() and each subspec another
     ArgumentGroup added with add_argument_group().
-
-    .. attribute:: metatype
-        The ConfigClass type this specification describes.
-    .. attribute:: members
-        List of SpecificationItems for the members of this group.
-    .. attribute:: subspecs
-        Mapping of spec names to Specification for any subspecs of this spec.
     """
-
+    #: The ConfigClass type this specification describes.
     metatype: Type[_ConfigGroupT]
+    #: List of SpecificationItems for the members of this group.
     members: list[SpecificationItem] = dataclasses.field(default_factory=list)
+    #: Mapping of spec names to Specification for any subspecs of this spec.
     subspecs: dict[str, "Specification[Any]"] = dataclasses.field(
         default_factory=dict
     )
