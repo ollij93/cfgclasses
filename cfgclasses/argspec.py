@@ -34,6 +34,7 @@ class ConfigOpts:
     """
     Data stored in a dataclass field's metadata for customizing CLI options.
     """
+
     #: Help string for the argument.
     help: str = dataclasses.field(default="")
     #: Name to display for the argument in usage messages.
@@ -47,6 +48,7 @@ class NonPositionalConfigOpts(ConfigOpts):
     """
     Config options for a non-positional argument.
     """
+
     #: List of alternative names (such as ``["-f", "--force"]``) for the argument.
     optnames: list[str] = dataclasses.field(default_factory=list)
 
@@ -300,6 +302,7 @@ class Specification(Generic[_ConfigGroupT]):
     SpecificationItem a call to add_argument() and each subspec another
     ArgumentGroup added with add_argument_group().
     """
+
     #: The ConfigClass type this specification describes.
     metatype: Type[_ConfigGroupT]
     #: List of SpecificationItems for the members of this group.
