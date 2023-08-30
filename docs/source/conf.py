@@ -11,6 +11,10 @@ copyright = "2023, Olli Johnson"
 author = "Olli Johnson"
 release = "1.1.0"
 
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent.parent.parent.absolute()))
+
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
