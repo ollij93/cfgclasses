@@ -10,7 +10,7 @@ The default implementation of ``ConfigClass.validate()`` is a no-op and can be f
 
 An example of the validators feature is shown below:
 
-.. code-block::
+.. code-block:: python
 
     # price-checker.py
 
@@ -49,7 +49,7 @@ An example of the validators feature is shown below:
 
 Example runs:
 
-.. code-block:: 
+.. code-block:: bash
 
     $ python3 foo.py --item shirt --colour red
     £10.45

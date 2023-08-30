@@ -219,7 +219,7 @@ Interacting with ``dataclasses`` and creating instances of ``ConfigOpts`` is mor
 
 The ``arg()`` function has the following interface:
 
-.. code-block::
+.. code-block:: python
 
     def arg(
         help: str,

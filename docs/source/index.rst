@@ -13,10 +13,6 @@ Config Classes (cfgclasses)
 
    getting-started
 
-.. note::
-
-   This documentation is a work in progress.  It is not yet complete.
-
 
 API Reference
 -------------

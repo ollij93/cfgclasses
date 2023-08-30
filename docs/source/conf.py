@@ -16,6 +16,7 @@ release = "1.1.0"
 
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx_autodoc_typehints",
     "sphinxcontrib.mermaid",
 ]
 

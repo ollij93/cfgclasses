@@ -23,7 +23,7 @@ However, if is the latter than has been selected for implementation.
 -----------------
 The following example shows how the ``Union`` type could be used to specify a mutually exclusive group of configuration items.
 
-.. code-block:: 
+.. code-block:: python
 
     from cfgclasses import ConfigClass
 
@@ -52,7 +52,7 @@ This is the solution that has been implemented.
 
 The following example shows how the ``ConfigClass`` type could be used to specify a mutually exclusive group of configuration items.
 
-.. code-block::
+.. code-block:: python
 
     from cfgclasses import MutuallyExclusiveConfigClass
     from dataclasses import dataclass
@@ -67,7 +67,7 @@ Here all the members of ``MyConfig`` are mutually exclusive to one another. The 
 
 A more complex example is shown below:
 
-.. code-block::
+.. code-block:: python
 
     from cfgclasses import ConfigClass, MutuallyExclusiveConfigClass
     from dataclasses import dataclass

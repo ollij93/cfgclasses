@@ -3,12 +3,7 @@ import dataclasses
 
 import pytest
 
-from cfgclasses import (
-    ConfigClass,
-    ConfigSubmode,
-    MutuallyExclusiveConfigClass,
-    arg,
-)
+from cfgclasses import ConfigClass, MutuallyExclusiveConfigClass, arg
 
 
 def test_mutually_exclusive() -> None:
@@ -60,10 +55,10 @@ def test_submodes() -> None:
 
         debug: bool = arg("Enable debug mode")
 
-    submodes: list[ConfigSubmode[ConfigClass]] = [
-        ConfigSubmode("a", SubmodeA),
-        ConfigSubmode("b", SubmodeB),
-    ]
+    submodes = {
+        "a": SubmodeA,
+        "b": SubmodeB,
+    }
 
     # Check successful specification of submode A
     assert TopLevelConfig.parse_args_with_submodes(

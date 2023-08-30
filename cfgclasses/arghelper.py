@@ -26,9 +26,9 @@ def arg(
 def arg(
     helpstr: str,
     *optnames: str,
+    default_factory: Callable[[], _T],
     metavar: Optional[str] = ...,
     choices: Optional[list[_T]] = ...,
-    default_factory: Callable[[], _T] = ...,
 ) -> _T:
     """Non-positional overload with a default."""
 
@@ -37,9 +37,9 @@ def arg(
 def arg(
     helpstr: str,
     *optnames: str,
+    default: _T,
     metavar: Optional[str] = ...,
     choices: Optional[list[_T]] = ...,
-    default: _T = ...,
 ) -> _T:
     """Non-positional overload with a default_factory."""
 
@@ -49,7 +49,7 @@ def arg(
 def arg(
     helpstr: str,
     *,
-    positional: bool = ...,
+    positional: bool,
     metavar: Optional[str] = ...,
     choices: Optional[list[_T]] = ...,
 ) -> _T:
@@ -61,10 +61,10 @@ def arg(
 def arg(
     helpstr: str,
     *,
-    positional: bool = ...,
+    positional: bool,
+    default_factory: Callable[[], _T],
     metavar: Optional[str] = ...,
     choices: Optional[list[_T]] = ...,
-    default_factory: Callable[[], _T] = ...,
 ) -> _T:
     """Positional overload with a default."""
 
@@ -74,10 +74,10 @@ def arg(
 def arg(
     helpstr: str,
     *,
-    positional: bool = ...,
+    positional: bool,
+    default: _T,
     metavar: Optional[str] = ...,
     choices: Optional[list[_T]] = ...,
-    default: _T = ...,
 ) -> _T:
     """Positional overload with a default_factory."""
 
@@ -91,7 +91,21 @@ def arg(
     default: Any = dataclasses.MISSING,
     default_factory: Any = dataclasses.MISSING,
 ) -> Any:
-    """Create a dataclass field with additional cfgclasses options stored."""
+    """
+    Create a dataclass field with additional cfgclasses options stored.
+
+    :param helpstr: Help string for this fields argument.
+    :param optnames: Optional list of option names for this fields argument.
+        E.g. ``["-v", "--verbose"]``.
+    :param positional: If true, use a positional argument for this field. Cannot
+        be used with ``optnames``.
+    :param metavar: Metavar to display alongside the argument for the field.
+    :param choices: List of valid choices for the value of this field.
+    :param default: Default value for the field if not given on the CLI.
+    :param default_factory: Default factory to construct an instance of the
+        field if not given on the CLI.
+    :return: The resulting dataclass field.
+    """
     if positional:
         opts = ConfigOpts(helpstr, metavar, choices)
     else:
@@ -142,7 +156,18 @@ def optional(
     metavar: Optional[str] = None,
     choices: Optional[list[Any]] = None,
 ) -> Any:
-    """Create a field with cfgclasses options with a default of None."""
+    """
+    Create a field with cfgclasses options with a default of None.
+
+    :param helpstr: Help string for this fields argument.
+    :param optnames: Optional list of option names for this fields argument.
+        E.g. ``["-v", "--verbose"]``.
+    :param positional: If true, use a positional argument for this field. Cannot
+        be used with ``optnames``.
+    :param metavar: Metavar to display alongside the argument for the field.
+    :param choices: List of valid choices for the value of this field.
+    :return: The resulting dataclass field.
+    """
     return arg(
         helpstr,
         *optnames,
