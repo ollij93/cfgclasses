@@ -15,7 +15,7 @@ An example of the validators feature is shown below:
     # price-checker.py
 
     import sys
-    from cfgclasses import ConfigClass, choices, simple
+    from cfgclasses import ConfigClass, arg
     from dataclasses import dataclass
 
     ITEMS = {
@@ -32,10 +32,10 @@ An example of the validators feature is shown below:
 
     @dataclass
     class Config(ConfigClass):
-        item: str = choices("Item to check the price for", ITEMS)
+        item: str = arg("Item to check the price for", choices=ITEMS)
         # Note: we can't specify the choices for colour here because it depends
         # on the item
-        colour: str = simple("Colour of the item")
+        colour: str = arg("Colour of the item")
         
         def validate(self):
             if self.colour not in ITEMS[self.item]:

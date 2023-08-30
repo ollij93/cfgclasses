@@ -274,7 +274,7 @@ The typing considerations are:
    * ``type`` is the type of the argument
    * ``required`` is set to ``True`` if ``default`` is not given
 
-.. [#nargs] other values of ``nargs`` are not supported @@@ - why
+.. [#nargs] other values of ``nargs`` are not supported as they are not known to be necessary configuration focussed view of the CLI.
 .. [#action] because of the naming of variables it is recommended not to True as a default value, or to override the option names to negate the flag the user must pass. E.g. ``--no-debug`` for a variable ``debug: bool = arg("Turn off debug", "--no-debug", default=True)``. Even in this example, the mis-match between the help message and the value of the variable is confusing.
 
 2.3.1 Positional options

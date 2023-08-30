@@ -25,15 +25,15 @@ A simple python application using cfgclasses looks like this:
 
 .. code-block:: python
 
-    import cfgclasses as cfg
     import dataclasses
     import sys
+    from cfgclasses import ConfigClass, arg
 
     @dataclasses.dataclass
-    class MyConfig(cfg.ConfigClass):
+    class MyConfig(ConfigClass):
         """A simple example application"""
-        name: str = cfg.simple("Your name")
-        num: int = cfg.simple("An integer option", default=0)
+        name: str = arg("Your name")
+        num: int = arg("An integer option", default=0)
 
     if __name__ == "__main__":
         config = MyConfig.parse_args(sys.argv[1:])
@@ -59,7 +59,7 @@ Common patterns
 ---------------
 
 cfgclasses comes with a number of utilty methods to reduce the volume of code
-required to define an applications interface. One of these has already been seen
-in the example above: ``simple(helpstr)``.
+required to define an applications interface. The most common of these has
+already been seen in the example above: ``arg(helpstr)``.
 
 @@@ TODO @@@ TODO

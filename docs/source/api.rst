@@ -4,8 +4,8 @@ API
 .. module:: cfgclasses
 
 This page documents the API for the cfgclasses package, the high-level
-structures such as the `ConfigClass` type as well as the provided helper
-functions such as `simple()`.
+structures such as the ``ConfigClass`` type as well as the provided helper
+functions such as ``arg()``.
 
 .. note::
-    TODO: Document the API.
+    @@@ TODO: Document the API.
