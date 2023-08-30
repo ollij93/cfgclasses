@@ -2,14 +2,6 @@ Design
 ======
 
 This page provides design details for the ``cfgclasses`` module.
-There are additional features of the module that have their own design pages as listed below. These pages are expansions on this original design that build upon the core principles and design aspects covered here.
-
-.. toctree::
-    :maxdepth: 1
-
-    designs/mutually_exclusive_groups
-    designs/transforms
-    designs/validators
 
 1. Problem Definition
 ---------------------
@@ -82,6 +74,10 @@ The ``Specification`` class is a representation of the ``ConfigClass`` definitio
  * keeps the most complex logic away from the interaction with ``argparse``, simplifying the code and the testing
  * puts this complex logic in pure functions, further improving the testability
  * simplifies the code path for nested configuration definitions as no branching is required
+
+In addition to this ``ConfigClass`` definition, the public API also includes ``ConfigOpts`` and ``NonPositionalConfigOpts`` classes (where the latter is a subclass of the former) which can be used to customize the options for a field in the ``ConfigClass`` definition. These are stored in the ``dataclasses.field()`` metadata for the field.
+
+Furthermore, a collection of helper functions for common patterns are provided, as well as an ``arg()`` function which creates the ``dataclasses`` field and inserts a ``ConfigOpts`` instance into the metadata in one convenient call. As such, it is expected that a programmer will not need to directly interact with the ``ConfigOpts`` classes, but rather will use the ``arg()`` function and the helper functions. Only when a programmer wants finer control over the ``dataclasses`` field definition will they need to manually create a ``ConfigOpts`` instance.
 
 2.2. Building the specification
 '''''''''''''''''''''''''''''''
@@ -216,6 +212,27 @@ Additionally, the ``NonPositionalConfigOpts`` class allows the user to specify:
 
 If there is no entry in a fields metadata for ``cfgclasses.CFG_METADATA_FIELD`` then the default value of ``NonPositionalConfigOpts`` is used. If an instance of ``ConfigOpts`` is found, then the field is treated as a positional argument.
 
+2.2.2 Programmer argument helper functions
+##########################################
+
+Interacting with ``dataclasses`` and creating instances of ``ConfigOpts`` is more verbose than necessary in many cases, so ``cfgclasses`` provides several utilities to improve this.
+
+The ``arg()`` function has the following interface:
+
+.. code-block::
+
+    def arg(
+        help: str,
+        *optnames: str,
+        positional: bool = False,
+        metavar: Optional[str] = None,
+        choices: Optional[list[Any]] = None,
+        default: Any = dataclasses.MISSING,
+        default_factory: Optional[Callable[[], Any]] = None,
+    ) -> dataclasses.Field[Any]:
+
+These arguments are mapped to the equivalent in either ``dataclasses.field()`` for default and default_factory, or to the ``ConfigOpts`` constructor for the other arguments. The ``positional`` argument is used to determine whether to create a ``ConfigOpts`` or ``NonPositionalConfigOpts`` instance, and is ``positional`` is provided then ``optnames`` cannot be specified.
+
 
 2.3 Populating the ArgumentParser
 '''''''''''''''''''''''''''''''''
@@ -294,3 +311,16 @@ The ``parse_args()`` method of the ``ConfigClass`` performs the following steps:
  * Reads from the ``argparse.Namespace`` output to create an instance of the programmers ``ConfigClass``
 
 The bulk of the complexity is in the creation of the ``SpecificationItem`` instances as there is a combination of logic based on the type of the fields and the users options for the field to be processed.
+
+
+
+Additional Feature Designs
+-----------------------------
+
+There are additional features of the module that have their own design pages as listed below. These pages are expansions on this original design that build upon the core principles and design aspects covered here.
+
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    designs/*

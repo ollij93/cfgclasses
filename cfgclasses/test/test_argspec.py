@@ -5,21 +5,11 @@ from typing import Any, Optional, Sequence, Type
 
 import pytest
 
-from cfgclasses import (
-    ConfigClass,
-    MutuallyExclusiveConfigClass,
-    choices,
-    optional,
-    positional,
-    simple,
-    store_true,
-)
+from cfgclasses import ConfigClass, MutuallyExclusiveConfigClass, arg, optional
 from cfgclasses.argspec import (
-    CFG_METADATA_FIELD,
     BoolSpecItem,
     ListPositionalSpecItem,
     ListSpecItem,
-    NonPositionalConfigOpts,
     OptionalSpecItem,
     PositionalSpecItem,
     Specification,
@@ -35,7 +25,7 @@ from cfgclasses.argspec import (
 class SimpleOptCase(ConfigClass):
     """Case with a simple required option."""
 
-    strfield: str = simple("A simple string field")
+    strfield: str = arg("A simple string field")
 
 
 simpleoptspec = Specification(
@@ -75,9 +65,9 @@ class ListOptCase(ConfigClass):
     """Case with a list option."""
 
     # First case has no default or default_factory so is required
-    firstlist: list[str] = simple("A list string field")
+    firstlist: list[str] = arg("A list string field")
     # Second case has a default_factory so is optional
-    secondlist: list[str] = simple(
+    secondlist: list[str] = arg(
         "Another list string field", default_factory=list
     )
 
@@ -104,8 +94,8 @@ listoptspec = Specification(
 class PositionalOptCase(ConfigClass):
     """Case with a positional option."""
 
-    posfield: str = positional("A positional string field")
-    poslistfield: list[str] = positional("A positional list field")
+    posfield: str = arg("A positional string field", positional=True)
+    poslistfield: list[str] = arg("A positional list field", positional=True)
 
 
 posoptspec = Specification(
@@ -131,12 +121,13 @@ posoptspec = Specification(
 class PositionalAndOptionalCase(ConfigClass):
     """Case with a combination of positional and optional options."""
 
-    strfield: str = simple("A simple string field")
-    posfield: str = positional("A positional string field")
-    intfield: int = simple("An integer field")
+    strfield: str = arg("A simple string field")
+    posfield: str = arg("A positional string field", positional=True)
+    intfield: int = arg("An integer field")
     optfield: Optional[str] = optional("An optional string field")
-    poslistfield: list[str] = positional(
+    poslistfield: list[str] = arg(
         "An optional positional list string field",
+        positional=True,
         default_factory=list,
     )
 
@@ -179,7 +170,9 @@ posplusoptspec = Specification(
 class ChoicesOptCase(ConfigClass):
     """Case with a choices option."""
 
-    choicefield: str = choices("A choice field", ["a", "b", "c"], default="a")
+    choicefield: str = arg(
+        "A choice field", choices=["a", "b", "c"], default="a"
+    )
 
 
 choicesoptspec = Specification(
@@ -200,14 +193,10 @@ choicesoptspec = Specification(
 class BooleanOptCase(ConfigClass):
     """Case with a store_true option."""
 
-    boolfield: bool = store_true("A boolean field")
-    negativeboolfield: bool = dataclasses.field(
+    boolfield: bool = arg("A boolean field")
+    negativeboolfield: bool = arg(
+        "An awkward boolean field with a 'True' default",
         default=True,
-        metadata={
-            CFG_METADATA_FIELD: NonPositionalConfigOpts(
-                "An awkward boolean field with a 'True' default"
-            )
-        },
     )
 
 
@@ -233,9 +222,7 @@ storetrueoptspec = Specification(
 class OptNameOptCase(ConfigClass):
     """Case with a custom option name."""
 
-    strfield: str = simple(
-        "A simple string field", optnames=["-c", "--custom-name"]
-    )
+    strfield: str = arg("A simple string field", "-c", "--custom-name")
 
 
 optnameoptspec = Specification(
@@ -268,8 +255,8 @@ hassubspec = Specification(
 class MutuallyExclusiveGroup(MutuallyExclusiveConfigClass):
     """Example mutually exclusive group."""
 
-    opt_a: int = simple("Option A", default=0)
-    opt_b: int = simple("Option B", default=0)
+    opt_a: int = arg("Option A", default=0)
+    opt_b: int = arg("Option B", default=0)
 
 
 @dataclasses.dataclass

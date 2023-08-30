@@ -2,26 +2,25 @@
 import dataclasses
 import sys
 
-import cfgclasses as cfg
+from cfgclasses import ConfigClass, arg
 
 
 @dataclasses.dataclass
-class Config(cfg.ConfigClass):
+class Config(ConfigClass):
     """Config class for this example script."""
 
-    natural: int = cfg.simple("A natural number")
+    natural: int = arg("A natural number")
 
     def validate(self) -> None:
         """Validate the provided number is a natural number."""
         if self.natural < 0:
             raise ValueError("natural numbers must be >= 0")
 
-
-def main(argv: list[str]) -> None:
-    """Main method of this example script."""
-    config = Config.parse_args(argv, prog="validation.py")
-    print(f"validated natural number: {config.natural}")
+    def run(self) -> None:
+        """Main method of this example script."""
+        print(f"validated natural number: {self.natural}")
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    config = Config.parse_args(sys.argv[1:], prog="validation.py")
+    config.run()

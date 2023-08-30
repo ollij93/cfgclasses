@@ -7,8 +7,7 @@ from cfgclasses import (
     ConfigClass,
     ConfigSubmode,
     MutuallyExclusiveConfigClass,
-    simple,
-    store_true,
+    arg,
 )
 
 
@@ -19,8 +18,8 @@ def test_mutually_exclusive() -> None:
     class MEGroupConfig(MutuallyExclusiveConfigClass):
         """Config for mutually exclusive options relating to A."""
 
-        anum: int = simple("A simple integer field", default=0)
-        apple: str = simple("A simple string field", default="no")
+        anum: int = arg("A simple integer field", default=0)
+        apple: str = arg("A simple string field", default="no")
 
     @dataclasses.dataclass
     class TopLevelConfig(ConfigClass):
@@ -47,19 +46,19 @@ def test_submodes() -> None:
     class SubmodeA(ConfigClass):
         """Config for the submode A."""
 
-        anum: int = simple("A simple integer field")
+        anum: int = arg("A simple integer field")
 
     @dataclasses.dataclass
     class SubmodeB(ConfigClass):
         """Config for the submode B."""
 
-        bnum: int = simple("A simple integer field")
+        bnum: int = arg("A simple integer field")
 
     @dataclasses.dataclass
     class TopLevelConfig(ConfigClass):
         """Top level config class containing the submodes."""
 
-        debug: bool = store_true("Enable debug mode")
+        debug: bool = arg("Enable debug mode")
 
     submodes: list[ConfigSubmode[ConfigClass]] = [
         ConfigSubmode("a", SubmodeA),
@@ -98,7 +97,7 @@ def test_validation_simple() -> None:
     class ValidationConfig(ConfigClass):
         """Config for the validation tests."""
 
-        anum: int = simple("A simple integer field")
+        anum: int = arg("A simple integer field")
 
         def validate(self) -> None:
             """Validate the config class instance raising a ValueError if invalid."""
@@ -122,7 +121,7 @@ def test_validation_nested() -> None:
     class ValidationConfig(ConfigClass):
         """Config for the validation tests."""
 
-        anum: int = simple("A simple integer field")
+        anum: int = arg("A simple integer field")
 
         def validate(self) -> None:
             """Validate the config class instance raising a ValueError if invalid."""
