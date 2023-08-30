@@ -57,6 +57,7 @@ Common patterns
 cfgclasses comes with utilty methods to reduce the volume of code required to define an applications interface. The most common of these has already been seen in the example above: ``arg(helpstr)``.
 
 .. autofunction:: cfgclasses::arg
+    :no-index:
 
 The other common pattern is to use ``optional(helpstr)`` which is the same as ``arg(helpstr, default=None)``. This is useful for defining optional arguments that can be passed to the application.
 

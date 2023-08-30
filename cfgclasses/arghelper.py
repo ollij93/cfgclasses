@@ -44,7 +44,6 @@ def arg(
     """Non-positional overload with a default_factory."""
 
 
-# Positional - no default
 @overload
 def arg(
     helpstr: str,
@@ -56,7 +55,6 @@ def arg(
     """Positional overload with no default."""
 
 
-# Positional - with default
 @overload
 def arg(
     helpstr: str,
@@ -69,7 +67,6 @@ def arg(
     """Positional overload with a default."""
 
 
-# Positional - with default_factory
 @overload
 def arg(
     helpstr: str,
