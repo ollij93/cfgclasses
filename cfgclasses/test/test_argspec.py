@@ -373,6 +373,32 @@ hasmutuallyexclusivegroup = Specification(
     },
 )
 
+
+@dataclasses.dataclass
+class TransformMembers(ConfigClass):
+    """Example with a member that uses a transform."""
+
+    opt_a: set[str] = arg("Option A", transform=set, transform_type=list[str])
+
+
+transformgroup = Specification(
+    TransformMembers,
+    members=[
+        ListSpecItem(
+            "opt_a",
+            help="Option A",
+            type=str,
+            default=NotSpecified(),
+            metavar=None,
+            choices=None,
+            transform=set,
+            optnames=[],
+        )
+    ],
+    subspecs={},
+)
+
+
 # =============================================================================
 # Test cases
 # =============================================================================
@@ -391,6 +417,7 @@ test_spec_from_class_cases = {
         HasMutuallyExclusiveGroupCase,
         hasmutuallyexclusivegroup,
     ),
+    "TransformMembers": (TransformMembers, transformgroup),
 }
 
 
@@ -626,6 +653,13 @@ test_e2e_parser_cases = {
         HasMutuallyExclusiveGroupCase(
             subspec=MutuallyExclusiveGroup(opt_a=0, opt_b=1)
         ),
+    ),
+    # =========================================================================
+    # Transform tests
+    "transform": (
+        transformgroup,
+        ["--opt-a", "A", "B", "C"],
+        TransformMembers(opt_a={"A", "B", "C"}),
     ),
 }
 

@@ -88,7 +88,7 @@ def arg(
     choices: Optional[list[_U]] = ...,
     transform: Optional[Callable[[_U], _T]] = ...,
     transform_type: Optional[Type[_U]] = ...,
-) -> _U:
+) -> _T:
     """Non-positional overload with no default and a transform function."""
 
 

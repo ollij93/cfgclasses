@@ -144,10 +144,10 @@ class SpecificationItem(abc.ABC, Generic[_T]):
         )
 
     @classmethod
-    def get_type_from_field(cls, field: dataclasses.Field[Any]) -> Type[Any]:
+    def get_argtype(cls, field_type: Type[Any]) -> Type[Any]:
         """Get the type to use with argparse for this field."""
-        # Default is just the field.type - but can be overridden e.g. for lists
-        return field.type
+        # Default is just the field_type - but can be overridden e.g. for lists
+        return field_type
 
     def add_to_parser(self, parser: argparse._ActionsContainer) -> None:
         """Add this argument to the given parser."""
@@ -183,7 +183,7 @@ class StandardSpecItem(SpecificationItem[_T]):
         """Instantiate an instance of this class from the field definition."""
         return cls(
             field.name,
-            metadata.transform_type or cls.get_type_from_field(field),
+            cls.get_argtype(metadata.transform_type or field.type),
             metadata.help,
             metadata.metavar,
             metadata.choices,
@@ -206,9 +206,9 @@ class ListSpecItem(StandardSpecItem[_T]):
         return super().get_kwargs() | {"nargs": "+"}
 
     @classmethod
-    def get_type_from_field(cls, field: dataclasses.Field[Any]) -> Type[Any]:
+    def get_argtype(cls, field_type: Type[Any]) -> Type[Any]:
         # For lists, the type is the type of the list elements
-        return get_args(field.type)[0]  # type: ignore
+        return get_args(field_type)[0]  # type: ignore
 
 
 @dataclasses.dataclass
@@ -219,9 +219,9 @@ class OptionalSpecItem(StandardSpecItem[_T]):
         return super().get_kwargs() | {"required": False}
 
     @classmethod
-    def get_type_from_field(cls, field: dataclasses.Field[Any]) -> Type[Any]:
+    def get_argtype(cls, field_type: Type[Any]) -> Type[Any]:
         # For Optional types, the type is the type of the optional value
-        return get_args(field.type)[0]  # type: ignore
+        return get_args(field_type)[0]  # type: ignore
 
 
 @dataclasses.dataclass
@@ -254,7 +254,7 @@ class PositionalSpecItem(SpecificationItem[_T]):
         """Instantiate an instance of this class from the field definition."""
         return cls(
             field.name,
-            metadata.transform_type or cls.get_type_from_field(field),
+            cls.get_argtype(metadata.transform_type or field.type),
             metadata.help,
             metadata.metavar,
             metadata.choices,
@@ -279,9 +279,9 @@ class ListPositionalSpecItem(PositionalSpecItem[_T]):
         return super().get_kwargs() | {"nargs": "+"}
 
     @classmethod
-    def get_type_from_field(cls, field: dataclasses.Field[Any]) -> Type[Any]:
+    def get_argtype(cls, field_type: Type[Any]) -> Type[Any]:
         # For lists, the type is the type of the list elements
-        return get_args(field.type)[0]  # type: ignore
+        return get_args(field_type)[0]  # type: ignore
 
 
 def specitem_from_field(
@@ -291,26 +291,27 @@ def specitem_from_field(
     metadata: ConfigOpts[Any, Any] = field.metadata.get(
         CFG_METADATA_FIELD, NonPositionalConfigOpts()
     )
+    field_type = metadata.transform_type or field.type
     ret: SpecificationItem[Any]
     if isinstance(metadata, NonPositionalConfigOpts):
         # Handle the creation of the standard specification item
-        if get_origin(field.type) == list:
+        if get_origin(field_type) == list:
             ret = ListSpecItem.from_field(metadata, field)
-        elif _is_optional_type(field.type):
+        elif _is_optional_type(field_type):
             ret = OptionalSpecItem.from_field(metadata, field)
-        elif field.type == bool:
+        elif field_type == bool:
             ret = BoolSpecItem.from_field(metadata, field)
         else:
             ret = StandardSpecItem.from_field(metadata, field)
     else:
         # Handle the creation of the positional specification item
-        if get_origin(field.type) == list:
+        if get_origin(field_type) == list:
             ret = ListPositionalSpecItem.from_field(metadata, field)
-        elif get_origin(field.type) is None:
+        elif get_origin(field_type) is None:
             ret = PositionalSpecItem.from_field(metadata, field)
         else:
             raise TypeError(
-                f"Can't use type {field.type} with a positional argument."
+                f"Can't use type {field_type} with a positional argument."
             )
 
     return ret
