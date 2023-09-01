@@ -4,6 +4,7 @@ import argparse
 import dataclasses
 from typing import (
     Any,
+    Callable,
     Generic,
     Iterable,
     Optional,
@@ -26,11 +27,25 @@ __all__ = (
 CFG_METADATA_FIELD = "cfgclasses.configopts"
 
 _T = TypeVar("_T")
+_U = TypeVar("_U")
 _ConfigGroupT = TypeVar("_ConfigGroupT", bound=ConfigGroup)
 
 
+#:Identity function for use as a default transform.
+def identity_transform(value: _T) -> _T:
+    """Identity function for use as a default transform."""
+    return value
+
+
+class NotSpecified:
+    """Type for unspecified argument specifiers"""
+
+    def __eq__(self, other: Any) -> bool:
+        return isinstance(other, NotSpecified)
+
+
 @dataclasses.dataclass
-class ConfigOpts:
+class ConfigOpts(Generic[_T, _U]):
     """
     Data stored in a dataclass field's metadata for customizing CLI options.
     """
@@ -40,24 +55,28 @@ class ConfigOpts:
     #: Name to display for the argument in usage messages.
     metavar: Optional[str] = dataclasses.field(default=None)
     #: List of valid choices for the argument.
-    choices: Optional[Iterable[Any]] = dataclasses.field(default=None)
+    choices: Optional[Iterable[_T]] = dataclasses.field(default=None)
+    #: Transform function to modify the argument value after parsing the CLI.
+    transform: Optional[Callable[[_T], _U]] = dataclasses.field(default=None)
+    #: Input type to apply to the CLI argument before transforming.
+    transform_type: Optional[Type[_T]] = dataclasses.field(default=None)
+    #: Default value for the argument if not provided on the CLI.
+    #: This is separate from the default and default_factory stored on the
+    #: dataclasses field as when working with transforms this value is the
+    #: un-transformed value of the default.
+    default: _T | NotSpecified = dataclasses.field(
+        default_factory=NotSpecified
+    )
 
 
 @dataclasses.dataclass
-class NonPositionalConfigOpts(ConfigOpts):
+class NonPositionalConfigOpts(ConfigOpts[_T, _U]):
     """
     Config options for a non-positional argument.
     """
 
     #: List of alternative names (such as ``["-f", "--force"]``) for the argument.
     optnames: list[str] = dataclasses.field(default_factory=list)
-
-
-class NotSpecified:
-    """Type for unspecified argument specifiers"""
-
-    def __eq__(self, other: Any) -> bool:
-        return isinstance(other, NotSpecified)
 
 
 def _default_from_field(field: dataclasses.Field[_T]) -> _T | NotSpecified:
@@ -80,7 +99,7 @@ def _is_optional_type(metatype: Type[Any]) -> bool:
 
 
 @dataclasses.dataclass
-class SpecificationItem(abc.ABC):
+class SpecificationItem(abc.ABC, Generic[_T]):
     """
     Specification for a single argument to be passed to
     argparse.ArgumentParser.add_argument().
@@ -91,15 +110,15 @@ class SpecificationItem(abc.ABC):
     #: Type the argument should be converted to by argparse.
     type: Type[Any]
     #: Help string to display for the argument.
-    help: str = dataclasses.field(default="")
+    help: str
     #: Metavar to display for the argument in the help message.
-    metavar: Optional[str] = dataclasses.field(default=None)
+    metavar: Optional[str]
     #: List of valid choices for the argument.
-    choices: Optional[Iterable[Any]] = dataclasses.field(default=None)
+    choices: Optional[Iterable[Any]]
     #: Default value for the argument if not provided on the CLI.
-    default: Any | NotSpecified = dataclasses.field(
-        default_factory=NotSpecified
-    )
+    default: Any
+    #: Transform function
+    transform: Callable[[Any], _T]
 
     @abc.abstractmethod
     def get_optnames(self) -> list[str]:
@@ -137,9 +156,15 @@ class SpecificationItem(abc.ABC):
             **self.get_kwargs(),
         )
 
+    def extract_value_from_namespace(
+        self, namespace: argparse.Namespace
+    ) -> Any:
+        """Extract the value of this argument from the given namespace."""
+        return self.transform(getattr(namespace, self.name))
+
 
 @dataclasses.dataclass
-class StandardSpecItem(SpecificationItem):
+class StandardSpecItem(SpecificationItem[_T]):
     """
     A non-positional argument specification item.
     """
@@ -147,20 +172,23 @@ class StandardSpecItem(SpecificationItem):
     #: List of alternative names (such as -f or --force) for the argument.
     #: If an empty list the name of the specification item is used with any
     #: underscores replaced with hyphens.
-    optnames: list[str] = dataclasses.field(default_factory=list)
+    optnames: list[str]
 
     @classmethod
     def from_field(
-        cls, metadata: NonPositionalConfigOpts, field: dataclasses.Field[Any]
-    ) -> "SpecificationItem":
+        cls,
+        metadata: NonPositionalConfigOpts[Any, _T],
+        field: dataclasses.Field[Any],
+    ) -> "SpecificationItem[_T]":
         """Instantiate an instance of this class from the field definition."""
         return cls(
             field.name,
-            cls.get_type_from_field(field),
+            metadata.transform_type or cls.get_type_from_field(field),
             metadata.help,
             metadata.metavar,
             metadata.choices,
             _default_from_field(field),
+            metadata.transform or identity_transform,
             metadata.optnames,
         )
 
@@ -169,7 +197,7 @@ class StandardSpecItem(SpecificationItem):
 
 
 @dataclasses.dataclass
-class ListSpecItem(StandardSpecItem):
+class ListSpecItem(StandardSpecItem[_T]):
     """
     A non-positional argument specification item that takes a list of values.
     """
@@ -184,7 +212,7 @@ class ListSpecItem(StandardSpecItem):
 
 
 @dataclasses.dataclass
-class OptionalSpecItem(StandardSpecItem):
+class OptionalSpecItem(StandardSpecItem[_T]):
     """A non-positional argument specification item that is optional."""
 
     def get_kwargs(self) -> dict[str, Any]:
@@ -197,7 +225,7 @@ class OptionalSpecItem(StandardSpecItem):
 
 
 @dataclasses.dataclass
-class BoolSpecItem(StandardSpecItem):
+class BoolSpecItem(StandardSpecItem[_T]):
     """A non-positional argument specification item that is a boolean."""
 
     def get_kwargs(self) -> dict[str, Any]:
@@ -213,7 +241,7 @@ class BoolSpecItem(StandardSpecItem):
         return ret
 
 
-class PositionalSpecItem(SpecificationItem):
+class PositionalSpecItem(SpecificationItem[_T]):
     """A positional argument specification item."""
 
     def get_optnames(self) -> list[str]:
@@ -221,16 +249,17 @@ class PositionalSpecItem(SpecificationItem):
 
     @classmethod
     def from_field(
-        cls, metadata: ConfigOpts, field: dataclasses.Field[Any]
-    ) -> "SpecificationItem":
+        cls, metadata: ConfigOpts[Any, _T], field: dataclasses.Field[Any]
+    ) -> "SpecificationItem[_T]":
         """Instantiate an instance of this class from the field definition."""
         return cls(
             field.name,
-            cls.get_type_from_field(field),
+            metadata.transform_type or cls.get_type_from_field(field),
             metadata.help,
             metadata.metavar,
             metadata.choices,
             _default_from_field(field),
+            metadata.transform or identity_transform,
         )
 
     def get_kwargs(self) -> dict[str, Any]:
@@ -243,7 +272,7 @@ class PositionalSpecItem(SpecificationItem):
         return ret
 
 
-class ListPositionalSpecItem(PositionalSpecItem):
+class ListPositionalSpecItem(PositionalSpecItem[_T]):
     """A positional argument specification item that takes a list of values."""
 
     def get_kwargs(self) -> dict[str, Any]:
@@ -255,12 +284,14 @@ class ListPositionalSpecItem(PositionalSpecItem):
         return get_args(field.type)[0]  # type: ignore
 
 
-def specitem_from_field(field: dataclasses.Field[Any]) -> "SpecificationItem":
+def specitem_from_field(
+    field: dataclasses.Field[Any],
+) -> "SpecificationItem[Any]":
     """Instantiate an instance of this class from the field definition."""
-    metadata: ConfigOpts = field.metadata.get(
+    metadata: ConfigOpts[Any, Any] = field.metadata.get(
         CFG_METADATA_FIELD, NonPositionalConfigOpts()
     )
-    ret: SpecificationItem
+    ret: SpecificationItem[Any]
     if isinstance(metadata, NonPositionalConfigOpts):
         # Handle the creation of the standard specification item
         if get_origin(field.type) == list:
@@ -306,26 +337,28 @@ class Specification(Generic[_ConfigGroupT]):
     #: The ConfigClass type this specification describes.
     metatype: Type[_ConfigGroupT]
     #: List of SpecificationItems for the members of this group.
-    members: list[SpecificationItem] = dataclasses.field(default_factory=list)
+    members: list[SpecificationItem[Any]]
     #: Mapping of spec names to Specification for any subspecs of this spec.
-    subspecs: dict[str, "Specification[Any]"] = dataclasses.field(
-        default_factory=dict
-    )
+    subspecs: dict[str, "Specification[Any]"]
 
     @staticmethod
     def from_class(
         metatype: Type[_ConfigGroupT],
     ) -> "Specification[_ConfigGroupT]":
         """Instantiate an instance of this class from the ConfigGroup class"""
-        spec = Specification(metatype)
-        for field in dataclasses.fields(metatype):
-            if _is_configcls(field.type):
-                spec.subspecs[field.name] = Specification.from_class(
-                    field.type
-                )
-            else:
-                spec.members.append(specitem_from_field(field))
-        return spec
+        return Specification(
+            metatype,
+            [
+                specitem_from_field(field)
+                for field in dataclasses.fields(metatype)
+                if not _is_configcls(field.type)
+            ],
+            {
+                field.name: Specification.from_class(field.type)
+                for field in dataclasses.fields(metatype)
+                if _is_configcls(field.type)
+            },
+        )
 
     def add_to_parser(self, parser: argparse._ActionsContainer) -> None:
         """Add this argument group to the given parser."""
@@ -341,7 +374,7 @@ class Specification(Generic[_ConfigGroupT]):
         """Construct an instance of the ConfigClass from the given namespace."""
         return self.metatype(
             **{
-                item.name.replace("-", "_"): getattr(namespace, item.name)
+                item.name: item.extract_value_from_namespace(namespace)
                 for item in self.members
             }
             | {
