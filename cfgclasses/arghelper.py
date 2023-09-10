@@ -86,8 +86,8 @@ def arg(
     *optnames: str,
     metavar: Optional[str] = ...,
     choices: Optional[list[_U]] = ...,
-    transform: Optional[Callable[[_U], _T]] = ...,
-    transform_type: Optional[Type[_U]] = ...,
+    transform: Callable[[_U], _T],
+    transform_type: Type[_U],
 ) -> _T:
     """Non-positional overload with no default and a transform function."""
 
@@ -99,8 +99,8 @@ def arg(
     default_factory: Callable[[], _U],
     metavar: Optional[str] = ...,
     choices: Optional[list[_U]] = ...,
-    transform: Optional[Callable[[_U], _T]] = ...,
-    transform_type: Optional[Type[_U]] = ...,
+    transform: Callable[[_U], _T],
+    transform_type: Type[_U],
 ) -> _T:
     """Non-positional overload with a default and a transform function."""
 
@@ -112,8 +112,8 @@ def arg(
     default: _U,
     metavar: Optional[str] = ...,
     choices: Optional[list[_U]] = ...,
-    transform: Optional[Callable[[_U], _T]] = ...,
-    transform_type: Optional[Type[_U]] = ...,
+    transform: Callable[[_U], _T],
+    transform_type: Type[_U],
 ) -> _T:
     """Non-positional overload with a default_factory and a transform function."""
 
@@ -125,8 +125,8 @@ def arg(
     positional: bool,
     metavar: Optional[str] = ...,
     choices: Optional[list[_U]] = ...,
-    transform: Optional[Callable[[_U], _T]] = ...,
-    transform_type: Optional[Type[_U]] = ...,
+    transform: Callable[[_U], _T],
+    transform_type: Type[_U],
 ) -> _T:
     """Positional overload with no default and a transform function."""
 
@@ -139,8 +139,8 @@ def arg(
     default_factory: Callable[[], _U],
     metavar: Optional[str] = ...,
     choices: Optional[list[_U]] = ...,
-    transform: Optional[Callable[[_U], _T]] = ...,
-    transform_type: Optional[Type[_U]] = ...,
+    transform: Callable[[_U], _T],
+    transform_type: Type[_U],
 ) -> _T:
     """Positional overload with a default and a transform function."""
 
@@ -153,8 +153,8 @@ def arg(
     default: _U,
     metavar: Optional[str] = ...,
     choices: Optional[list[_U]] = ...,
-    transform: Optional[Callable[[_U], _T]] = ...,
-    transform_type: Optional[Type[_U]] = ...,
+    transform: Callable[[_U], _T],
+    transform_type: Type[_U],
 ) -> _T:
     """Positional overload with a default_factory and a transform function."""
 
@@ -268,8 +268,8 @@ def optional(
     *optnames: str,
     metavar: Optional[str] = ...,
     choices: Optional[list[_U]] = ...,
-    transform: Optional[Callable[[_U], _T]] = ...,
-    transform_type: Optional[Type[_U]] = ...,
+    transform: Callable[[_U], _T],
+    transform_type: Type[_U],
 ) -> _T:
     """Positional overload with a transform function."""
 
@@ -281,8 +281,8 @@ def optional(
     positional: bool = ...,
     metavar: Optional[str] = ...,
     choices: Optional[list[_U]] = ...,
-    transform: Optional[Callable[[_U], _T]] = ...,
-    transform_type: Optional[Type[_U]] = ...,
+    transform: Callable[[_U], _T],
+    transform_type: Type[_U],
 ) -> _T:
     """Non-positional overload with a transform function."""
 
@@ -312,13 +312,24 @@ def optional(
         read from the CLI.
     :return: The resulting dataclass field.
     """
-    return arg(
-        helpstr,
-        *optnames,
-        positional=positional,
-        metavar=metavar,
-        choices=choices,
-        default=None,
-        transform=transform,
-        transform_type=transform_type,
-    )
+    if transform and transform_type:
+        ret = arg(
+            helpstr,
+            *optnames,
+            positional=positional,
+            metavar=metavar,
+            choices=choices,
+            default=None,
+            transform=transform,
+            transform_type=transform_type,
+        )
+    else:
+        ret = arg(
+            helpstr,
+            *optnames,
+            positional=positional,
+            metavar=metavar,
+            choices=choices,
+            default=None,
+        )
+    return ret
