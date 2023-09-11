@@ -28,9 +28,9 @@ def test_invalid_transform() -> None:
         )
 
         # Missing transform_type
-        field_c: str = arg("Help", transform=lambda x: x)  # O: call-overload
+        field_c: str = arg("Help", transform=lambda x: x)  # O: [call-overload]
         # Missing transform function
-        field_d: str = arg(  # O: call-overload
+        field_d: str = arg(  # O: [call-overload]
             "Help",
             transform_type=str,
         )
