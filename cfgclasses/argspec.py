@@ -79,6 +79,18 @@ class NonPositionalConfigOpts(ConfigOpts[_T, _U]):
     optnames: list[str] = dataclasses.field(default_factory=list)
 
 
+@dataclasses.dataclass
+class ConfigClassTransform(Generic[_ConfigGroupT, _U]):
+    """
+    Data stored in a dataclass field's metadata for transforming config classes.
+    """
+
+    #: Transform function to modify the CLI values after parsing.
+    transform: Callable[[_ConfigGroupT], _U]
+    #: Input type to build the CLI from before transforming.
+    transform_type: Type[_ConfigGroupT]
+
+
 def _default_from_field(field: dataclasses.Field[_T]) -> _T | NotSpecified:
     """Determine the default value for the field."""
     if field.default is not dataclasses.MISSING:
@@ -284,10 +296,10 @@ class ListPositionalSpecItem(PositionalSpecItem[_T]):
         return get_args(field_type)[0]  # type: ignore
 
 
-def specitem_from_field(
+def _specitem_from_field(
     field: dataclasses.Field[Any],
 ) -> "SpecificationItem[Any]":
-    """Instantiate an instance of this class from the field definition."""
+    """Instantiate an instance of SpecificationItem from the field definition."""
     metadata: ConfigOpts[Any, Any] = field.metadata.get(
         CFG_METADATA_FIELD, NonPositionalConfigOpts()
     )
@@ -317,12 +329,30 @@ def specitem_from_field(
     return ret
 
 
-def _is_configcls(type_: Any) -> bool:
-    """Check if the given type is a ConfigClass"""
+def _is_configcls_field(field: dataclasses.Field[Any]) -> bool:
+    """Check if the given field is a ConfigClass typed field."""
+    extraconfig = field.metadata.get(CFG_METADATA_FIELD)
+    if isinstance(extraconfig, ConfigClassTransform):
+        return True
     try:
-        return issubclass(type_, ConfigGroup)
+        return issubclass(field.type, ConfigGroup)
     except TypeError:
         return False
+
+
+def _spec_from_field(
+    field: dataclasses.Field[Any],
+) -> "Specification[Any]":
+    """Instantiate an instance of a Specification from the field definition."""
+    type_ = field.type
+    extraconfig = field.metadata.get(CFG_METADATA_FIELD)
+    if isinstance(extraconfig, ConfigClassTransform):
+        type_ = extraconfig.transform_type
+
+    return Specification.from_class(
+        type_,
+        extraconfig.transform if extraconfig else None,
+    )
 
 
 @dataclasses.dataclass
@@ -341,24 +371,28 @@ class Specification(Generic[_ConfigGroupT]):
     members: list[SpecificationItem[Any]]
     #: Mapping of spec names to Specification for any subspecs of this spec.
     subspecs: dict[str, "Specification[Any]"]
+    #: The transform to be applied to this specification
+    transform: Optional[Callable[[_ConfigGroupT], Any]]
 
     @staticmethod
     def from_class(
         metatype: Type[_ConfigGroupT],
+        cfgtransform: Optional[Callable[[_ConfigGroupT], Any]] = None,
     ) -> "Specification[_ConfigGroupT]":
         """Instantiate an instance of this class from the ConfigGroup class"""
         return Specification(
             metatype,
             [
-                specitem_from_field(field)
+                _specitem_from_field(field)
                 for field in dataclasses.fields(metatype)
-                if not _is_configcls(field.type)
+                if not _is_configcls_field(field)
             ],
             {
-                field.name: Specification.from_class(field.type)
+                field.name: _spec_from_field(field)
                 for field in dataclasses.fields(metatype)
-                if _is_configcls(field.type)
+                if _is_configcls_field(field)
             },
+            cfgtransform if cfgtransform else None,
         )
 
     def add_to_parser(self, parser: argparse._ActionsContainer) -> None:
@@ -379,7 +413,9 @@ class Specification(Generic[_ConfigGroupT]):
                 for item in self.members
             }
             | {
-                subspec_name: subspec.construct_from_namespace(namespace)
+                subspec_name: (subspec.transform or (lambda x: x))(
+                    subspec.construct_from_namespace(namespace)
+                )
                 for subspec_name, subspec in self.subspecs.items()
             }
         )

@@ -39,6 +39,92 @@ Furthermore, the use of ``lambda`` functions as transforms or the use of other u
 
 Therefore, a type for the input to the transformation must also be specified.
 
+Class transformations
+#####################
+In addition to the above, it is also sometimes desirable to transform a group of configuration options into a single instance of another type.
+
+For example, in the popular example case of specifying the logging level, it is common to have a ``--debug`` option and the mutually-exclusive ``--quiet`` option.
+These options can then be used to set the logging level to ``DEBUG`` or ``ERROR`` respectively, with the default being ``INFO``.
+Without the use of transforms, the config class definition would look like so:
+
+.. code-block:: python
+
+    @dataclass
+    class LoggingConfig(MutuallyExclusiveConfigClass):
+        debug: bool = arg("Enable debug logging")
+        quiet: bool = arg("Disable info logging")
+
+        def log_level(self) -> int:
+            if self.debug:
+                return logging.DEBUG
+            elif self.quiet:
+                return logging.ERROR
+            else:
+                return logging.INFO
+
+    @dataclass
+    class Config(ConfigClass):
+        log_level: LoggingConfig
+
+While this pattern is sufficient, it does have one major drawback: When manually constructing an instance of ``Config``, e.g. during testing, an invalid combination of ``debug`` and ``quiet`` can be used.
+
+.. code-block:: python
+
+    config = Config(LoggingConfig(debug=True, quiet=True))
+
+In this situation, the behavior depends on which of the ``debug`` or ``quiet`` modes is checked first in the ``log_level()`` method.
+
+With the use of a class transform, this problem can be avoided.
+
+.. code-block:: python
+
+    @dataclass
+    class LoggingConfig(MutuallyExclusiveConfigClass):
+        debug: bool = arg("Enable debug logging")
+        quiet: bool = arg("Disable info logging")
+
+        def log_level(self) -> int:
+            if self.debug:
+                return logging.DEBUG
+            elif self.quiet:
+                return logging.ERROR
+            else:
+                return logging.INFO
+
+    @dataclass
+    class Config(ConfigClass):
+        log_level: int = cfgtransform(LoggingConfig, LoggingConfig.log_level)
+
+In this case, the ``log_level`` configuration option is transformed from a ``LoggingConfig`` instance to an ``int`` using the ``LoggingConfig.log_level`` function used previously.
+While it is still possible to construct invalid instances of ``LoggingConfig``, it is no longer possible to construct an invalid instance of ``Config`` itself.
+
+Another pattern where these transform are useful is constructing more complex classes from simple ConfigClass definitions.
+Often a class definition may be out of the programmers control (e.g. part of a third party library) or the required functionality may mean that usage of a dataclass is not possible.
+In these cases, the programmer can define a simple ConfigClass with options sufficient to then build the more complex class from.
+
+.. code-block:: python
+
+    class NotADataClass:
+        def __init__(self, a: int, b: str):
+            self.a = a
+            self.b = b
+
+    @dataclass
+    class DataClassConfig(ConfigClass):
+        a: int = arg("An int")
+        b: str = arg("A string")
+
+        def to_not_a_dataclass(self) -> NotADataClass:
+            return NotADataClass(self.a, self.b)
+
+    @dataclass
+    class Config(ConfigClass):
+        not_a_dataclass: NotADataClass = cfgtransform(
+            DataClassConfig,
+            DataClassConfig.to_not_a_dataclass,
+        )
+
+
 3. Design ammendments
 ---------------------
 The following changes are made to the design to support transformations:
@@ -51,6 +137,13 @@ The following changes are made to the design to support transformations:
 
   * If not specified, the transformation function is set to the identity function and the transformation type is set to the type of the configuration option.
 * To build the ``ConfigClass`` from the CLI arguments, instead of directly assigning the value from the ``argparse.Namespace`` the transformation function is invoked with the value from the ``argparse.Namespace``.
+
+For the class transformation, the following changes are made:
+
+* A new ``cfgtransform()`` function is added which takes a type and a transform function.
+* A new ``ConfigClassTransform`` type is defined to contain the type and transform function for classes.
+* The ``Specification`` is updated to check for this class in the dataclass metadata and store the transform information.
+* When building the ``ConfigClass`` from the CLI arguments, the transforms of each of its subspecs are invoked to apply the transformations.
 
 4. Implementation and testing
 -----------------------------

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from cfgclasses import ConfigClass, arg
+from cfgclasses import ConfigClass, arg, cfgtransform
 
 # =============================================================================
 # The test cases in this file are run both as regular test cases and as
@@ -50,6 +50,45 @@ def test_invalid_transform() -> None:
     # To keep linting and coverage happy use the class we've just defined
     # and call the transform function to cover the missing line.
     TestClass(1, "B", "C", "D", "E")
+    typed_transform(0)
+
+
+@pytest.mark.mypy_testing
+def test_invalid_cfgtransform() -> None:
+    """Test that invalid types in config class transforms are identified."""
+
+    @dataclass
+    class SubTestClass(ConfigClass):
+        """Sub test class."""
+
+        field_x: str
+
+    def typed_transform(i: int) -> bytes:
+        return bytes(i)
+
+    @dataclass
+    class TestClass(ConfigClass):
+        """Test class."""
+
+        # No use of cfgtransform - should be fine
+        subtest_a: SubTestClass
+
+        # Simple transform - should be fine
+        subtest_b: str = cfgtransform(SubTestClass, str)
+
+        # Mismatching transform and output type
+        subtest_c: int = cfgtransform(  # E: [assignment]
+            SubTestClass,
+            str,
+        )
+
+        # Mismatching transform and input type
+        subtest_d: bytes = cfgtransform(
+            SubTestClass,
+            typed_transform,  # E: [arg-type]
+        )
+
+    TestClass(SubTestClass("A"), "B", 3, b"D")
     typed_transform(0)
 
 

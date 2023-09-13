@@ -5,7 +5,13 @@ from typing import Any, Optional, Sequence, Type
 
 import pytest
 
-from cfgclasses import ConfigClass, MutuallyExclusiveConfigClass, arg, optional
+from cfgclasses import (
+    ConfigClass,
+    MutuallyExclusiveConfigClass,
+    arg,
+    cfgtransform,
+    optional,
+)
 from cfgclasses.argspec import (
     BoolSpecItem,
     ListPositionalSpecItem,
@@ -45,6 +51,7 @@ simpleoptspec = Specification(
         )
     ],
     subspecs={},
+    transform=None,
 )
 
 
@@ -70,6 +77,7 @@ optionaloptspec = Specification(
         )
     ],
     subspecs={},
+    transform=None,
 )
 
 
@@ -110,6 +118,7 @@ listoptspec = Specification(
         ),
     ],
     subspecs={},
+    transform=None,
 )
 
 
@@ -144,6 +153,7 @@ posoptspec = Specification(
         ),
     ],
     subspecs={},
+    transform=None,
 )
 
 
@@ -217,6 +227,7 @@ posplusoptspec = Specification(
         ),
     ],
     subspecs={},
+    transform=None,
 )
 
 
@@ -244,6 +255,7 @@ choicesoptspec = Specification(
         )
     ],
     subspecs={},
+    transform=None,
 )
 
 
@@ -283,6 +295,7 @@ storetrueoptspec = Specification(
         ),
     ],
     subspecs={},
+    transform=None,
 )
 
 
@@ -308,6 +321,7 @@ optnameoptspec = Specification(
         )
     ],
     subspecs={},
+    transform=None,
 )
 
 
@@ -315,13 +329,14 @@ optnameoptspec = Specification(
 class HasSubGroupCase(ConfigClass):
     """Case with a subspec."""
 
-    subspec: SimpleOptCase = dataclasses.field()
+    subspec: SimpleOptCase
 
 
 hassubspec = Specification(
     HasSubGroupCase,
     members=[],
     subspecs={"subspec": simpleoptspec},
+    transform=None,
 )
 
 
@@ -369,8 +384,10 @@ hasmutuallyexclusivegroup = Specification(
                 ),
             ],
             subspecs={},
+            transform=None,
         )
     },
+    transform=None,
 )
 
 
@@ -396,6 +413,30 @@ transformgroup = Specification(
         )
     ],
     subspecs={},
+    transform=None,
+)
+
+
+@dataclasses.dataclass
+class TransformSubGroupCase(ConfigClass):
+    """Case with a subspec to be transformed."""
+
+    subspec: str = cfgtransform(SimpleOptCase, str)
+
+
+transformsubspec = Specification(
+    TransformSubGroupCase,
+    members=[],
+    subspecs={
+        "subspec": Specification(
+            simpleoptspec.metatype,
+            members=simpleoptspec.members,
+            subspecs=simpleoptspec.subspecs,
+            # Transform is set - differs from the simpleoptspec
+            transform=str,
+        )
+    },
+    transform=None,
 )
 
 
@@ -418,6 +459,7 @@ test_spec_from_class_cases = {
         hasmutuallyexclusivegroup,
     ),
     "TransformMembers": (TransformMembers, transformgroup),
+    "TransformSubGroupCase": (TransformSubGroupCase, transformsubspec),
 }
 
 
@@ -656,10 +698,15 @@ test_e2e_parser_cases = {
     ),
     # =========================================================================
     # Transform tests
-    "transform": (
+    "transform_members": (
         transformgroup,
         ["--opt-a", "A", "B", "C"],
         TransformMembers(opt_a={"A", "B", "C"}),
+    ),
+    "transform_subgroup": (
+        transformsubspec,
+        ["--strfield", "test"],
+        TransformSubGroupCase(subspec="SimpleOptCase(strfield='test')"),
     ),
 }
 

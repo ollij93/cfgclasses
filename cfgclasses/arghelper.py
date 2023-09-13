@@ -2,15 +2,23 @@
 import dataclasses
 from typing import Any, Callable, Optional, Type, TypeVar, overload
 
-from .argspec import CFG_METADATA_FIELD, ConfigOpts, NonPositionalConfigOpts
+from .argspec import (
+    CFG_METADATA_FIELD,
+    ConfigClassTransform,
+    ConfigOpts,
+    NonPositionalConfigOpts,
+)
+from .configclass import ConfigClass
 
 __all__ = (
     "arg",
+    "cfgtransform",
     "optional",
 )
 
 _T = TypeVar("_T")
 _U = TypeVar("_U")
+_ConfigClassT = TypeVar("_ConfigClassT", bound=ConfigClass)
 
 
 @overload
@@ -332,4 +340,23 @@ def optional(
             choices=choices,
             default=None,
         )
+    return ret
+
+
+def cfgtransform(
+    transform_type: Type[_ConfigClassT],
+    transform: Callable[[_ConfigClassT], _U],
+) -> _U:
+    """
+    Create a field for a nested ConfigClass with a transform.
+
+    :param transform_type: The type that the transform function takes as input.
+    :param transform: The transform function to apply.
+    :return: The resulting dataclass field.
+    """
+    ret: _U = dataclasses.field(
+        metadata={
+            CFG_METADATA_FIELD: ConfigClassTransform(transform, transform_type)
+        }
+    )
     return ret
