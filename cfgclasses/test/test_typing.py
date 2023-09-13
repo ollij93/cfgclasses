@@ -6,13 +6,18 @@ import pytest
 
 from cfgclasses import ConfigClass, arg
 
+# =============================================================================
+# The test cases in this file are run both as regular test cases and as
+# mypy_testing cases. Regular asserts can be made within the cases if needed.
+# =============================================================================
+
 
 @pytest.mark.mypy_testing
 def test_invalid_transform() -> None:
     """Test that invalid types in transforms are identified."""
 
-    def typed_transform(x: int) -> str:
-        return str(x)
+    def typed_transform(i: int) -> str:
+        return str(i)
 
     @dataclass
     class TestClass(ConfigClass):
@@ -42,7 +47,10 @@ def test_invalid_transform() -> None:
             transform=typed_transform,  # E: [arg-type]
         )
 
+    # To keep linting and coverage happy use the class we've just defined
+    # and call the transform function to cover the missing line.
     TestClass(1, "B", "C", "D", "E")
+    typed_transform(0)
 
 
 @pytest.mark.mypy_testing
@@ -97,3 +105,18 @@ def test_incompatible_default_args() -> None:
         )
 
     TestClass("A", "B")
+
+
+@pytest.mark.mypy_testing
+def test_positional_optnames() -> None:
+    """Test that option names can't be specified with a positional argument."""
+
+    @dataclass
+    class TestClass(ConfigClass):
+        """Test class."""
+
+        field_a: str = arg(  # O: [call-overload]
+            "Help", "FIELD_A", positional=True
+        )
+
+    TestClass("A")
