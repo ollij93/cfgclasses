@@ -27,6 +27,16 @@ At a lower level these functions instantiate these classes and add them to the
 .. autoclass:: cfgclasses.ConfigOpts
 .. autoclass:: cfgclasses.NonPositionalConfigOpts
 
+There are also equivalents for the creation of nested
+:class:`cfgclasses.ConfigClass` definitions.
+
+.. autofunction:: cfgclasses.cfgtransform
+
+Which in turn creates a :class:`cfgclasses.ConfigClassTransform` object in the
+key ``cfgclasses.CFG_METADATA_FIELD``.
+
+.. autoclass:: cfgclasses.ConfigClassTransform
+
 """
 
 from . import arghelper, argspec, configclass

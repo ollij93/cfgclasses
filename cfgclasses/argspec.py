@@ -20,6 +20,7 @@ from .configgroup import ConfigGroup
 __all__ = (
     "CFG_METADATA_FIELD",
     "ConfigOpts",
+    "ConfigClassTransform",
     "NonPositionalConfigOpts",
 )
 
