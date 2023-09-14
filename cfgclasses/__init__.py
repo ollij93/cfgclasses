@@ -37,6 +37,14 @@ key ``cfgclasses.CFG_METADATA_FIELD``.
 
 .. autoclass:: cfgclasses.ConfigClassTransform
 
+There is an additional submodule :mod:`cfgclasses.transforms` containing several
+common transform functions.
+
+cfgclasses.transforms
+---------------------
+
+.. automodule:: cfgclasses.transforms
+
 """
 
 from . import arghelper, argspec, configclass
