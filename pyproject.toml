@@ -39,6 +39,7 @@ line_length = 79
 [tool.mypy]
 exclude = [
     '^venv/',
+    '^cfgclasses/test/test_typing.py$',
 ]
 warn_unused_configs = true
 disallow_any_generics = true

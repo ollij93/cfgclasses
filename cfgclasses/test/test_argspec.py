@@ -5,16 +5,24 @@ from typing import Any, Optional, Sequence, Type
 
 import pytest
 
-from cfgclasses import ConfigClass, MutuallyExclusiveConfigClass, arg, optional
+from cfgclasses import (
+    ConfigClass,
+    MutuallyExclusiveConfigClass,
+    arg,
+    cfgtransform,
+    optional,
+)
 from cfgclasses.argspec import (
     BoolSpecItem,
     ListPositionalSpecItem,
     ListSpecItem,
+    NotSpecified,
     OptionalSpecItem,
     PositionalSpecItem,
     Specification,
     SpecificationItem,
     StandardSpecItem,
+    identity_transform,
 )
 
 
@@ -35,8 +43,15 @@ simpleoptspec = Specification(
             "strfield",
             help="A simple string field",
             type=str,
+            metavar=None,
+            choices=None,
+            default=NotSpecified(),
+            transform=identity_transform,
+            optnames=[],
         )
     ],
+    subspecs={},
+    transform=None,
 )
 
 
@@ -54,9 +69,15 @@ optionaloptspec = Specification(
             "optfield",
             help="An optional string field",
             type=str,
+            metavar=None,
+            choices=None,
             default=None,
+            transform=identity_transform,
+            optnames=[],
         )
     ],
+    subspecs={},
+    transform=None,
 )
 
 
@@ -79,14 +100,25 @@ listoptspec = Specification(
             "firstlist",
             help="A list string field",
             type=str,
+            default=NotSpecified(),
+            metavar=None,
+            choices=None,
+            transform=identity_transform,
+            optnames=[],
         ),
         ListSpecItem(
             "secondlist",
             help="Another list string field",
             type=str,
             default=[],
+            metavar=None,
+            choices=None,
+            transform=identity_transform,
+            optnames=[],
         ),
     ],
+    subspecs={},
+    transform=None,
 )
 
 
@@ -105,13 +137,23 @@ posoptspec = Specification(
             "posfield",
             help="A positional string field",
             type=str,
+            default=NotSpecified(),
+            metavar=None,
+            choices=None,
+            transform=identity_transform,
         ),
         ListPositionalSpecItem(
             "poslistfield",
             help="A positional list field",
             type=str,
+            default=NotSpecified(),
+            metavar=None,
+            choices=None,
+            transform=identity_transform,
         ),
     ],
+    subspecs={},
+    transform=None,
 )
 
 
@@ -139,30 +181,53 @@ posplusoptspec = Specification(
             "strfield",
             help="A simple string field",
             type=str,
+            default=NotSpecified(),
+            metavar=None,
+            choices=None,
+            transform=identity_transform,
+            optnames=[],
         ),
         PositionalSpecItem(
             "posfield",
             help="A positional string field",
             type=str,
+            default=NotSpecified(),
+            metavar=None,
+            choices=None,
+            transform=identity_transform,
         ),
         StandardSpecItem(
             "intfield",
             help="An integer field",
             type=int,
+            default=NotSpecified(),
+            metavar=None,
+            choices=None,
+            transform=identity_transform,
+            optnames=[],
         ),
         OptionalSpecItem(
             "optfield",
             help="An optional string field",
             type=str,
             default=None,
+            metavar=None,
+            choices=None,
+            transform=identity_transform,
+            optnames=[],
         ),
         ListPositionalSpecItem(
             "poslistfield",
             help="An optional positional list string field",
             type=str,
             default=[],
+            metavar=None,
+            choices=None,
+            transform=identity_transform,
         ),
     ],
+    subspecs={},
+    transform=None,
 )
 
 
@@ -184,8 +249,13 @@ choicesoptspec = Specification(
             type=str,
             choices=["a", "b", "c"],
             default="a",
+            metavar=None,
+            transform=identity_transform,
+            optnames=[],
         )
     ],
+    subspecs={},
+    transform=None,
 )
 
 
@@ -207,14 +277,25 @@ storetrueoptspec = Specification(
             "boolfield",
             help="A boolean field",
             type=bool,
+            default=NotSpecified(),
+            metavar=None,
+            choices=None,
+            transform=identity_transform,
+            optnames=[],
         ),
         BoolSpecItem(
             "negativeboolfield",
             help="An awkward boolean field with a 'True' default",
             type=bool,
             default=True,
+            metavar=None,
+            choices=None,
+            transform=identity_transform,
+            optnames=[],
         ),
     ],
+    subspecs={},
+    transform=None,
 )
 
 
@@ -233,8 +314,14 @@ optnameoptspec = Specification(
             help="A simple string field",
             type=str,
             optnames=["-c", "--custom-name"],
+            default=NotSpecified(),
+            metavar=None,
+            choices=None,
+            transform=identity_transform,
         )
     ],
+    subspecs={},
+    transform=None,
 )
 
 
@@ -242,12 +329,14 @@ optnameoptspec = Specification(
 class HasSubGroupCase(ConfigClass):
     """Case with a subspec."""
 
-    subspec: SimpleOptCase = dataclasses.field()
+    subspec: SimpleOptCase
 
 
 hassubspec = Specification(
     HasSubGroupCase,
+    members=[],
     subspecs={"subspec": simpleoptspec},
+    transform=None,
 )
 
 
@@ -268,6 +357,7 @@ class HasMutuallyExclusiveGroupCase(ConfigClass):
 
 hasmutuallyexclusivegroup = Specification(
     HasMutuallyExclusiveGroupCase,
+    members=[],
     subspecs={
         "subspec": Specification(
             MutuallyExclusiveGroup,
@@ -277,17 +367,78 @@ hasmutuallyexclusivegroup = Specification(
                     help="Option A",
                     type=int,
                     default=0,
+                    metavar=None,
+                    choices=None,
+                    transform=identity_transform,
+                    optnames=[],
                 ),
                 StandardSpecItem(
                     "opt_b",
                     help="Option B",
                     type=int,
                     default=0,
+                    metavar=None,
+                    choices=None,
+                    transform=identity_transform,
+                    optnames=[],
                 ),
             ],
+            subspecs={},
+            transform=None,
         )
     },
+    transform=None,
 )
+
+
+@dataclasses.dataclass
+class TransformMembers(ConfigClass):
+    """Example with a member that uses a transform."""
+
+    opt_a: set[str] = arg("Option A", transform=set, transform_type=list[str])
+
+
+transformgroup = Specification(
+    TransformMembers,
+    members=[
+        ListSpecItem(
+            "opt_a",
+            help="Option A",
+            type=str,
+            default=NotSpecified(),
+            metavar=None,
+            choices=None,
+            transform=set,
+            optnames=[],
+        )
+    ],
+    subspecs={},
+    transform=None,
+)
+
+
+@dataclasses.dataclass
+class TransformSubGroupCase(ConfigClass):
+    """Case with a subspec to be transformed."""
+
+    subspec: str = cfgtransform(SimpleOptCase, str)
+
+
+transformsubspec = Specification(
+    TransformSubGroupCase,
+    members=[],
+    subspecs={
+        "subspec": Specification(
+            simpleoptspec.metatype,
+            members=simpleoptspec.members,
+            subspecs=simpleoptspec.subspecs,
+            # Transform is set - differs from the simpleoptspec
+            transform=str,
+        )
+    },
+    transform=None,
+)
+
 
 # =============================================================================
 # Test cases
@@ -307,6 +458,8 @@ test_spec_from_class_cases = {
         HasMutuallyExclusiveGroupCase,
         hasmutuallyexclusivegroup,
     ),
+    "TransformMembers": (TransformMembers, transformgroup),
+    "TransformSubGroupCase": (TransformSubGroupCase, transformsubspec),
 }
 
 
@@ -327,7 +480,16 @@ def test_spec_from_class(
 
 test_specitem_to_kwargs_cases = {
     "required": (
-        StandardSpecItem("required", help="is required", type=str),
+        StandardSpecItem(
+            "required",
+            help="is required",
+            type=str,
+            default=NotSpecified(),
+            metavar=None,
+            choices=None,
+            transform=identity_transform,
+            optnames=[],
+        ),
         {
             "dest": "required",
             "help": "is required",
@@ -336,7 +498,16 @@ test_specitem_to_kwargs_cases = {
         },
     ),
     "optional": (
-        OptionalSpecItem("optional", help="is optional", type=str),
+        OptionalSpecItem(
+            "optional",
+            help="is optional",
+            type=str,
+            default=NotSpecified(),
+            metavar=None,
+            choices=None,
+            transform=identity_transform,
+            optnames=[],
+        ),
         {
             "dest": "optional",
             "help": "is optional",
@@ -345,7 +516,15 @@ test_specitem_to_kwargs_cases = {
         },
     ),
     "positional": (
-        PositionalSpecItem("pos", help="is positional", type=str),
+        PositionalSpecItem(
+            "pos",
+            help="is positional",
+            type=str,
+            default=NotSpecified(),
+            metavar=None,
+            choices=None,
+            transform=identity_transform,
+        ),
         {"help": "is positional", "type": str},
     ),
     "choices": (
@@ -354,6 +533,10 @@ test_specitem_to_kwargs_cases = {
             help="has choices",
             type=str,
             choices=["a", "b", "c"],
+            default=NotSpecified(),
+            metavar=None,
+            transform=identity_transform,
+            optnames=[],
         ),
         {
             "dest": "choices",
@@ -372,7 +555,7 @@ test_specitem_to_kwargs_cases = {
     ids=test_specitem_to_kwargs_cases.keys(),
 )
 def test_specitem_to_kwargs(
-    specitem: SpecificationItem, expectedkwargs: dict[str, Any]
+    specitem: SpecificationItem[Any], expectedkwargs: dict[str, Any]
 ) -> None:
     """Test the SpecificationItem.get_kwargs() method."""
     assert specitem.get_kwargs() == expectedkwargs
@@ -512,6 +695,18 @@ test_e2e_parser_cases = {
         HasMutuallyExclusiveGroupCase(
             subspec=MutuallyExclusiveGroup(opt_a=0, opt_b=1)
         ),
+    ),
+    # =========================================================================
+    # Transform tests
+    "transform_members": (
+        transformgroup,
+        ["--opt-a", "A", "B", "C"],
+        TransformMembers(opt_a={"A", "B", "C"}),
+    ),
+    "transform_subgroup": (
+        transformsubspec,
+        ["--strfield", "test"],
+        TransformSubGroupCase(subspec="SimpleOptCase(strfield='test')"),
     ),
 }
 

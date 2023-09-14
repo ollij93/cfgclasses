@@ -12,6 +12,8 @@ Strongly typed tool configuration classes for argument parsing.
 
 ConfigClasses are representations of a python tools CLI configuration options built on [dataclasses](https://docs.python.org/3/library/dataclasses.html). This allows individual tools to focus on specifying their configuration structure without the overhead of interacting with argparse and the typeless Namespace it returns.
 
+See the [documnentation](https://ollij93.github.io/cfgclasses/) for full user guides and API references.
+
 ## Installation
 
 ```sh
@@ -24,6 +26,7 @@ pip install cfgclasses
 * Nested config and tool submodes reduce code repetition
 * Mutually exclusive groups support
 * Validation functions for reliable verification of config
+* Argument transformations reducing repetition of common patterns (e.g. reading contents of a file)
 
 ## Example Usage
 
