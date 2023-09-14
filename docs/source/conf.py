@@ -9,7 +9,7 @@
 project = "cfgclasses"
 copyright = "2023, Olli Johnson"
 author = "Olli Johnson"
-release = "2.0.0"
+release = "2.1.0"
 
 import sys
 from pathlib import Path
