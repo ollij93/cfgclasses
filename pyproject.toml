@@ -1,6 +1,6 @@
 [project]
 name = "cfgclasses"
-version = "2.1.0"
+version = "2.1.1"
 authors = [
   { name="Olli Johnson", email="ollijohnson93@gmail.com" },
 ]
@@ -24,6 +24,7 @@ build-backend = "hatchling.build"
 [tool.hatch.build]
 include = [
   "cfgclasses/**/*.py",
+  "cfgclasses/py.typed",
 ]
 
 # ==============================================================================
