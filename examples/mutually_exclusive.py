@@ -3,11 +3,12 @@ import dataclasses
 import logging
 import sys
 
-from cfgclasses import ConfigClass, MutuallyExclusiveConfigClass, arg
+from cfgclasses import arg, parse_args, mutually_exclusive
 
 
+@mutually_exclusive
 @dataclasses.dataclass
-class LogLevel(MutuallyExclusiveConfigClass):
+class LogLevel:
     """Config group for specifying the log level."""
 
     debug: bool = arg("Enable debug logging")
@@ -23,7 +24,7 @@ class LogLevel(MutuallyExclusiveConfigClass):
 
 
 @dataclasses.dataclass
-class Config(ConfigClass):
+class Config:
     """Config class for this example script."""
 
     loglevel: LogLevel
@@ -37,5 +38,5 @@ class Config(ConfigClass):
 
 
 if __name__ == "__main__":
-    config = Config.parse_args(sys.argv[1:], prog="mutually_exclusive.py")
+    config = parse_args(Config, sys.argv[1:], prog="mutually_exclusive.py")
     config.run()
