@@ -15,7 +15,7 @@ The boilerplate issue is more of a problem for larger tools, but can be a signif
 
 Adding to the boilerplate issue is the fact there are common patterns that appear in the usage of argparse's ``add_argument()`` method, yet no central utility methods exist to encapsulate these patterns. In larger projects, utilities can be specified within the project itself for common argument patterns (e.g. file paths, boolean flags, etc), however for smaller projects this is not practical. ``cfgclasses`` aims to provide centralised utilities for common argument patterns.
 
-Similarly, groups of tools which accept similar groups of arguments often duplicate code as building an ``argparse.ArgumentParser`` does not lead to natural code reuse. ``cfgclasses`` uses nested ``ConfigClass`` definitions (encapsulation), aiming to make code reuse easier and more natural. This same encapsulation also allows for logical grouping of configuration items and methods associated with these items, which can be useful for tools with large numbers of options. 
+Similarly, groups of tools which accept similar groups of arguments often duplicate code as building an ``argparse.ArgumentParser`` does not lead to natural code reuse. ``cfgclasses`` uses nested ``dataclass`` definitions (encapsulation), aiming to make code reuse easier and more natural. This same encapsulation also allows for logical grouping of configuration items and methods associated with these items, which can be useful for tools with large numbers of options. 
 
 1.1 Inspiration - ``dataclasses``
 '''''''''''''''''''''''''''''''''
@@ -43,26 +43,27 @@ This sections describes the high-level flow of the ``cfgclasses`` module. The su
 '''''''''''''''''''
 
 The high-level design of ``cfgclasses`` is as follows:
- * A programmer defines their tools configuration in a class inheriting from ``cfgclasses.ConfigClass`` and using the ``dataclasses.dataclass`` decorator
- * The ``ConfigClass`` class contains a ``parse_args()`` method that performs the following major steps:
+ * A programmer defines their tools configuration in a class using the ``dataclasses.dataclass`` decorator.
+ * The programmer calls the ``cfgclasses.parse_args()`` method on this class with the CLI arguments.
+ * The ``parse_args()`` method performs the following internal flow:
 
-   1. Creates a ``Specification`` instance from the ``ConfigClass`` definition
-   2. Builds an ``argparse.ArgumentParser`` instance from the ``Specification`` instance
-   3. Parses the CLI arguments using this ``argparse.ArgumentParser``
-   4. Reads from the ``argparse.Namespace`` output to create an instance of the programmers ``ConfigClass``
+   1. Creates a ``Specification`` instance from the class definition.
+   2. Builds an ``argparse.ArgumentParser`` instance from the ``Specification`` instance.
+   3. Parses the CLI arguments using this ``argparse.ArgumentParser``.
+   4. Reads from the ``argparse.Namespace`` output to create an instance of the programmers ``dataclass``.
 
 Note that step (3) is entirely handled by the ``argparse`` module. Steps (1), (2) and (4) are each discussed further in the following subsections.
 
 .. mermaid::
 
     ---
-    title: ConfigClass::parse_args(argv)
+    title: cfgclasses::parse_args(cls, argv)
     ---
     flowchart LR
         A["`Create a _Specification_`"]:::internal
         B["`Build the _ArgumentParser_`"]:::internal
         C["`Parse CLI into _Namespace_`"]:::external
-        D["`Instantiate the _ConfigClass_`"]:::internal
+        D["`Instantiate the _dataclass_`"]:::internal
         A --> B
         B --> C
         C --> D
@@ -70,18 +71,18 @@ Note that step (3) is entirely handled by the ``argparse`` module. Steps (1), (2
         classDef external stroke:#0f0,fill:#dfd
 
 
-The ``Specification`` class is a representation of the ``ConfigClass`` definition, where each item of config is expressed by a ``SpecificationItem`` which has attributes mapping directly to the arguments accepted by ``argparse.ArgumentParser.add_argument()``. Creating this specification of the arguments separately from the creation and population of the ``Specification`` benefits the code flow in a number of ways:
+The ``Specification`` class is a representation of the ``dataclass`` definition, where each item of config is expressed by a ``SpecificationItem`` which has attributes mapping directly to the arguments accepted by ``argparse.ArgumentParser.add_argument()``. Creating this specification of the arguments separately from the creation and population of the ``Specification`` benefits the code flow in a number of ways:
  * keeps the most complex logic away from the interaction with ``argparse``, simplifying the code and the testing
  * puts this complex logic in pure functions, further improving the testability
  * simplifies the code path for nested configuration definitions as no branching is required
 
-In addition to this ``ConfigClass`` definition, the public API also includes ``ConfigOpts`` and ``NonPositionalConfigOpts`` classes (where the latter is a subclass of the former) which can be used to customize the options for a field in the ``ConfigClass`` definition. These are stored in the ``dataclasses.field()`` metadata for the field.
+In addition to this ``parse_args()`` definition, the public API also includes ``ConfigOpts`` and ``NonPositionalConfigOpts`` classes (where the latter is a subclass of the former) which can be used to customize the options for a field in the ``dataclass`` definition. These are stored in the ``dataclasses.field()`` metadata for the field.
 
 Furthermore, a collection of helper functions for common patterns are provided, as well as an ``arg()`` function which creates the ``dataclasses`` field and inserts a ``ConfigOpts`` instance into the metadata in one convenient call. As such, it is expected that a programmer will not need to directly interact with the ``ConfigOpts`` classes, but rather will use the ``arg()`` function and the helper functions. Only when a programmer wants finer control over the ``dataclasses`` field definition will they need to manually create a ``ConfigOpts`` instance.
 
 2.2. Building the specification
 '''''''''''''''''''''''''''''''
-The ``Specification`` is built from the ``ConfigClass`` definition by using the ``dataclasses`` module to inspect the class definition and producing a ``SpecificationItem`` for each field in the class, or another ``Specification`` instance for each nested ``ConfigClass``. 
+The ``Specification`` is built from the ``dataclass`` definition by using the ``dataclasses`` module to inspect the class definition and producing a ``SpecificationItem`` for each field in the class, or another ``Specification`` instance for each nested ``dataclass``. @@@ Is this nesting a problem?
 
 .. mermaid::
 
@@ -91,7 +92,6 @@ The ``Specification`` is built from the ``ConfigClass`` definition by using the 
     classDiagram
         direction LR
         namespace cfgclasses {
-            class ConfigClass
             class Specification
             class SpecificationItem
             class StandardSpecItem
@@ -101,11 +101,8 @@ The ``Specification`` is built from the ``ConfigClass`` definition by using the 
             class PositionalSpecItem
             class ListPositionalSpecItem
         }
-        class ConfigClass {
-            parse_args(argv: list[str]) ConfigClass
-        }
         class Specification {
-            metatype: Type[ConfigClass]
+            metatype: Type[ToolsConfig]
             members: list[SpecificationItem]
             subspecs: list[Specification]
             add_to_parser(parser: argparse.ArgumentParser)
@@ -123,7 +120,7 @@ The ``Specification`` is built from the ``ConfigClass`` definition by using the 
 
         }
 
-        ConfigClass "1" ..o Specification: metatype
+        ToolsConfig "1" ..o Specification: metatype
         Specification *-- "0..n" SpecificationItem: members
         Specification *-- "0..n" Specification: subspecs
 
@@ -165,7 +162,6 @@ The ``Specification`` is built from the ``ConfigClass`` definition by using the 
             tool_option_a: int
             tool_option_b: str
         }
-        ConfigClass <|-- ToolsConfig
 
         
 
@@ -182,7 +178,7 @@ It contains the the following methods:
  * ``get_kwargs()`` - returns a dictionary of keyword arguments
  * ``add_to_parser()`` - adds an argument to the given parser using the ``get_optnames()`` and ``get_kwargs()`` methods
 
-There are then several subclasses of ``SpecificationItem`` which are used to represent the different types of fields that can be defined in a ``ConfigClass``. These subclasses are:
+There are then several subclasses of ``SpecificationItem`` which are used to represent the different types of fields that can be defined in a ``dataclass`` supported by ``cfgclasses``. These subclasses are:
  * ``StandardSpecItem`` - a standard CLI argument (non-positional)
 
    * ``OptionalSpecItem`` - an optional argument
@@ -198,7 +194,7 @@ These classifications of arguments are based on the sets of options to argparse 
 2.2.1 Programmer customization
 ##############################
 
-The programmer can specify the type of the field in the ``ConfigClass`` definition, and can use the ``default`` and ``default_factory`` options to control the default value given to argparse. However, to customise any other attributes for an entry, or to set an argument as positional, the ``dataclasses.field()`` metadata is used.
+The programmer can specify the type of the field in the ``dataclass`` definition, and can use the ``default`` and ``default_factory`` options to control the default value given to argparse. However, to customise any other attributes for an entry, or to set an argument as positional, the ``dataclasses.field()`` metadata is used.
 
 The ``dataclasses`` metadata is an untyped dictionary stored on fields, that allows us to store any information we like on a field as well as the built-in values like defaults. ``cfgclasses`` uses a particular entry in this metadata ``cfgclasses.CFG_METADATA_FIELD`` to store a ``ConfigOpts`` or ``NonPositionalConfigOpts`` instance.
 
@@ -245,7 +241,7 @@ The ``ArgOpts`` instance for each ``SpecificationItem`` contains information on 
  * ``choices`` - the list of valid choices for the argument
  * ``default`` - the default value for the argument
 
-Other than ``type`` all of these are optional and are set by the programmer when defining their ``ConfigClass`` fields.
+Other than ``type`` all of these are optional and are set by the programmer when defining their ``dataclass`` fields.
 The additional option ``dest`` is also commonly used with ``add_argument`` to set the name of the attribute in the ``argparse.Namespace`` that the value of the argument should be stored in. This value matches the name of she ``SpecificationItem``.
 
 
@@ -295,20 +291,20 @@ However, this is only possible for regular and ``list`` types, not for ``Optiona
 
 Finally, ``required`` cannot be specified for any positional argument created for argparse.
 
-2.4 Creating the ``ConfigClass`` from the ``argparse.Namespace``
-''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
-Once the ``argparse.Namespace`` has been produced it will contain attributes for all the ``SpecificationItem`` instances in the ``Specification`` and its nested subspecs. The attribute names will have been set using the ``dest`` option to ``add_argument()`` to match the name attribute of the ``SpecificationItem``. The values of these attributes will have appropriate types such that they can be directly assigned to the corresponding field in the ``ConfigClass`` definition.
+2.4 Creating the ``dataclass`` instance from the ``argparse.Namespace``
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Once the ``argparse.Namespace`` has been produced it will contain attributes for all the ``SpecificationItem`` instances in the ``Specification`` and its nested subspecs. The attribute names will have been set using the ``dest`` option to ``add_argument()`` to match the name attribute of the ``SpecificationItem``. The values of these attributes will have appropriate types such that they can be directly assigned to the corresponding field in the ``dataclass`` definition.
 
-As such, the ``ConfigClass`` can be instantiated by iterating over the ``SpecificationItem`` instances and assigning the value of the corresponding attribute in the ``argparse.Namespace`` to the field in the ``ConfigClass``. For nested configuration, we simply need to perform this operation depth-first so that we build the nested configuration instances and assign them to the correct fields in the parent configuration instance.
+As such, the ``dataclass`` can be instantiated by iterating over the ``SpecificationItem`` instances and assigning the value of the corresponding attribute in the ``argparse.Namespace`` to the field in the ``dataclass``. For nested configuration, we simply need to perform this operation depth-first so that we build the nested configuration instances and assign them to the correct fields in the parent configuration instance.
 
 
 2.5 Summary
 '''''''''''
-The ``parse_args()`` method of the ``ConfigClass`` performs the following steps:
- * Creates a ``Specification`` instance from the ``ConfigClass`` definition
+The ``parse_args()`` method of the ``cfgclasses`` module performs the following steps:
+ * Creates a ``Specification`` instance from the ``dataclass`` definition
  * Builds an ``argparse.ArgumentParser`` instance from the ``Specification`` instance
  * Parses the CLI arguments using this ``argparse.ArgumentParser``
- * Reads from the ``argparse.Namespace`` output to create an instance of the programmers ``ConfigClass``
+ * Reads from the ``argparse.Namespace`` output to create an instance of the programmers ``dataclass``
 
 The bulk of the complexity is in the creation of the ``SpecificationItem`` instances as there is a combination of logic based on the type of the fields and the users options for the field to be processed.
 
