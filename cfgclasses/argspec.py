@@ -1,8 +1,10 @@
 """Module for defining the argument specification for a ConfigClass."""
+
 import abc
 import argparse
 import dataclasses
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Generic,
@@ -15,10 +17,18 @@ from typing import (
     get_origin,
 )
 
-from .configgroup import ConfigGroup
+if TYPE_CHECKING:
+    from _typeshed import DataclassInstance
+
+    _DataclassInstanceT = TypeVar(
+        "_DataclassInstanceT", bound=DataclassInstance
+    )
+else:
+    _DataclassInstanceT = TypeVar("_DataclassInstanceT")
 
 __all__ = (
     "CFG_METADATA_FIELD",
+    "CFG_MUTUALLY_EXCLUSIVE_ATTR",
     "ConfigOpts",
     "ConfigClassTransform",
     "NonPositionalConfigOpts",
@@ -26,10 +36,10 @@ __all__ = (
 
 #:Key in the dataclasses field metadata to store the ConfigOpts in.
 CFG_METADATA_FIELD = "cfgclasses.configopts"
+CFG_MUTUALLY_EXCLUSIVE_ATTR = "__mutually_exclusive_cfgclass__"
 
 _T = TypeVar("_T")
 _U = TypeVar("_U")
-_ConfigGroupT = TypeVar("_ConfigGroupT", bound=ConfigGroup)
 
 
 #:Identity function for use as a default transform.
@@ -81,15 +91,15 @@ class NonPositionalConfigOpts(ConfigOpts[_T, _U]):
 
 
 @dataclasses.dataclass
-class ConfigClassTransform(Generic[_ConfigGroupT, _U]):
+class ConfigClassTransform(Generic[_T, _U]):
     """
     Data stored in a dataclass field's metadata for transforming config classes.
     """
 
     #: Transform function to modify the CLI values after parsing.
-    transform: Callable[[_ConfigGroupT], _U]
+    transform: Callable[[_T], _U]
     #: Input type to build the CLI from before transforming.
-    transform_type: Type[_ConfigGroupT]
+    transform_type: Type[_T]
 
 
 def _default_from_field(field: dataclasses.Field[_T]) -> _T | NotSpecified:
@@ -336,7 +346,7 @@ def _is_configcls_field(field: dataclasses.Field[Any]) -> bool:
     if isinstance(extraconfig, ConfigClassTransform):
         return True
     try:
-        return issubclass(field.type, ConfigGroup)
+        return dataclasses.is_dataclass(field.type)
     except TypeError:
         return False
 
@@ -357,7 +367,7 @@ def _spec_from_field(
 
 
 @dataclasses.dataclass
-class Specification(Generic[_ConfigGroupT]):
+class Specification(Generic[_DataclassInstanceT]):
     """
     Representation of a ConfigClass in format suitable to pass to argparse.
 
@@ -367,19 +377,19 @@ class Specification(Generic[_ConfigGroupT]):
     """
 
     #: The ConfigClass type this specification describes.
-    metatype: Type[_ConfigGroupT]
+    metatype: Type[_DataclassInstanceT]
     #: List of SpecificationItems for the members of this group.
     members: list[SpecificationItem[Any]]
     #: Mapping of spec names to Specification for any subspecs of this spec.
     subspecs: dict[str, "Specification[Any]"]
     #: The transform to be applied to this specification
-    transform: Optional[Callable[[_ConfigGroupT], Any]]
+    transform: Optional[Callable[[_DataclassInstanceT], Any]]
 
     @staticmethod
     def from_class(
-        metatype: Type[_ConfigGroupT],
-        cfgtransform: Optional[Callable[[_ConfigGroupT], Any]] = None,
-    ) -> "Specification[_ConfigGroupT]":
+        metatype: Type[_DataclassInstanceT],
+        cfgtransform: Optional[Callable[[_DataclassInstanceT], Any]] = None,
+    ) -> "Specification[_DataclassInstanceT]":
         """Instantiate an instance of this class from the ConfigGroup class"""
         return Specification(
             metatype,
@@ -398,7 +408,12 @@ class Specification(Generic[_ConfigGroupT]):
 
     def add_to_parser(self, parser: argparse._ActionsContainer) -> None:
         """Add this argument group to the given parser."""
-        group = self.metatype.add_argument_group(parser)
+        group = (
+            parser.add_mutually_exclusive_group()
+            if hasattr(self.metatype, CFG_MUTUALLY_EXCLUSIVE_ATTR)
+            and getattr(self.metatype, CFG_MUTUALLY_EXCLUSIVE_ATTR)
+            else parser.add_argument_group()
+        )
         for member in self.members:
             member.add_to_parser(group)
         for subspec in self.subspecs.values():
@@ -406,8 +421,8 @@ class Specification(Generic[_ConfigGroupT]):
 
     def construct_from_namespace(
         self, namespace: argparse.Namespace
-    ) -> _ConfigGroupT:
-        """Construct an instance of the ConfigClass from the given namespace."""
+    ) -> _DataclassInstanceT:
+        """Construct an instance of the dataclass from the given namespace."""
         return self.metatype(
             **{
                 item.name: item.extract_value_from_namespace(namespace)

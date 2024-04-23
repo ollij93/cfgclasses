@@ -1,6 +1,6 @@
 [project]
 name = "cfgclasses"
-version = "2.1.1"
+version = "2.2.0"
 authors = [
   { name="Olli Johnson", email="ollijohnson93@gmail.com" },
 ]
@@ -183,4 +183,3 @@ min-similarity-lines=-1
 allow-global-unused-variables = true
 
 #===============================================================================
-

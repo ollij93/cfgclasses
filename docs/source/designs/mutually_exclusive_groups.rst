@@ -14,7 +14,7 @@ A common case where this is used is when a program takes a ``--debug`` flag to o
 -----------------------
 There were two considered solutions to this problem:
  1. The use of the ``Union`` type to allow one of two subgroups to be specified.
- 2. A simpler specification that a ConfigClass is itself a mutually exclusive group.
+ 2. A simpler specification via a decorator that a ``dataclass`` is itself a mutually exclusive group.
 
 These two solutions are discussed in the following subsections.
 However, if is the latter than has been selected for implementation.
@@ -25,15 +25,18 @@ The following example shows how the ``Union`` type could be used to specify a mu
 
 .. code-block:: python
 
-    from cfgclasses import ConfigClass
+    from dataclasses import dataclass
 
-    class DebugConfig(ConfigClass):
+    @dataclass
+    class DebugConfig:
         debug: bool
 
-    class QuietConfig(ConfigClass):
+    @dataclass
+    class QuietConfig:
         quiet: bool
 
-    class MyConfig(ConfigClass):
+    @dataclass
+    class MyConfig:
         verbosity: Union[DebugConfig, QuietConfig]
 
 
@@ -44,21 +47,22 @@ Unfortunately there are a number of downfalls:
 2. ``argparse`` does not support the nesting of groups within mutually exclusive groups, so the feature of A and B being mutually exclusive to C cannot be supported.
 
 
-1.1.2. ConfigClass as mutually exclusive group
+1.1.2. ``dataclass`` as mutually exclusive group
 -----------------------------------------------
 This solution is much simpler and more in line with the common case of a single mutually exclusive group.
 
 This is the solution that has been implemented.
 
-The following example shows how the ``ConfigClass`` type could be used to specify a mutually exclusive group of configuration items.
+The following example shows how the use of the ``mutually_exclusive`` decorator on the ``dataclass`` could be used to specify a mutually exclusive group of configuration items.
 
 .. code-block:: python
 
-    from cfgclasses import MutuallyExclusiveConfigClass
+    import cfgclasses
     from dataclasses import dataclass
 
+    @cfgclasses.mutually_exclusive
     @dataclass
-    class MyConfig(MutuallyExclusiveConfigClass):
+    class MyConfig:
         debug: bool
         quiet: bool
 
@@ -69,16 +73,17 @@ A more complex example is shown below:
 
 .. code-block:: python
 
-    from cfgclasses import ConfigClass, MutuallyExclusiveConfigClass
+    import cfgclasses
     from dataclasses import dataclass
 
+    @cfgclasses.mutually_exclusive
     @dataclass
-    class LoggingConfig(MutuallyExclusiveConfigClass):
+    class LoggingConfig:
         debug: bool
         quiet: bool
 
     @dataclass
-    class MyConfig(ConfigClass):
+    class MyConfig:
         name: str
         logging: LoggingConfig
 
@@ -86,6 +91,8 @@ In this case ``--debug`` and ``--quiet`` are mutually exclusive, but ``--name`` 
 
 2. Implementation
 -----------------
+@@@ - Needs to be updated to reflect the new planned decorator
+
 A new ``add_argument_group()`` classmethod is added to ``ConfigClass``. This method takes in a ``argparse`` group and adds and returns a new group to it. This method is then invoked after building the ``Specification`` for a ``ConfigClass``, prior to adding its members to the parser group.
 
 The default implementation of this new function is to call and return ``add_argument_group()`` on the given parser.

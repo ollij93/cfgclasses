@@ -8,7 +8,6 @@ from .argspec import (
     ConfigOpts,
     NonPositionalConfigOpts,
 )
-from .configclass import ConfigClass
 
 __all__ = (
     "arg",
@@ -18,7 +17,6 @@ __all__ = (
 
 _T = TypeVar("_T")
 _U = TypeVar("_U")
-_ConfigClassT = TypeVar("_ConfigClassT", bound=ConfigClass)
 
 
 @overload
@@ -344,8 +342,8 @@ def optional(
 
 
 def cfgtransform(
-    transform_type: Type[_ConfigClassT],
-    transform: Callable[[_ConfigClassT], _U],
+    transform_type: Type[_T],
+    transform: Callable[[_T], _U],
 ) -> _U:
     """
     Create a field for a nested ConfigClass with a transform.
