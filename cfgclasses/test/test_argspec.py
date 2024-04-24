@@ -6,12 +6,7 @@ from typing import Any, Optional, Sequence, Type, TypeVar
 
 import pytest
 
-from cfgclasses import (
-    arg,
-    cfgtransform,
-    mutually_exclusive,
-    optional,
-)
+from cfgclasses import arg, cfgtransform, mutually_exclusive, optional
 from cfgclasses.argspec import (
     BoolSpecItem,
     ListPositionalSpecItem,

@@ -64,7 +64,6 @@ def _add_submode_parsers(
     return submode_specs
 
 
-# @@@ Is there API documentation for this function?
 def parse_args_with_submodes(
     cls: Type[_T],
     argv: Sequence[str],

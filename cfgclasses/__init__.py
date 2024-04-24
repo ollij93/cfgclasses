@@ -5,10 +5,10 @@ allows individual tools to focus on specifying their configuration structure
 without the overhead of interacting with argparse and the typeless Namespace it
 returns.
 
-The primary entrypoint for this module is :function:`cfgclasses.parse_args()`
-its ``parse_args()`` classmethod.
+The primary entrypoint for this module is the ``parse_args()`` function.
 
 .. autofunction:: cfgclasses.parse_args
+.. autofunction:: cfgclasses.parse_args_with_submodes
 
 Additionally the following functions are provided to simplify the creation of
 the class fields.
@@ -34,7 +34,7 @@ key ``cfgclasses.CFG_METADATA_FIELD``.
 .. autoclass:: cfgclasses.ConfigClassTransform
 
 There is an additional submodule :mod:`cfgclasses.transforms` containing several
-common transform functions.
+common transform functions. See below.
 
 Finally, the following class decorator is provided to allow the creation of
 mutually exclusive groups of options.

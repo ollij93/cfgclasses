@@ -48,7 +48,7 @@ Unfortunately there are a number of downfalls:
 
 
 1.1.2. ``dataclass`` as mutually exclusive group
------------------------------------------------
+------------------------------------------------
 This solution is much simpler and more in line with the common case of a single mutually exclusive group.
 
 This is the solution that has been implemented.
