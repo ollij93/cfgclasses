@@ -21,6 +21,7 @@ __all__ = (
     "MutuallyExclusiveConfigClass",
     "parse_args",
     "parse_args_with_submodes",
+    "mutually_exclusive",
 )
 
 

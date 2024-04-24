@@ -3,7 +3,7 @@ import dataclasses
 import logging
 import sys
 
-from cfgclasses import arg, parse_args, mutually_exclusive
+from cfgclasses import arg, mutually_exclusive, parse_args
 
 
 @mutually_exclusive
