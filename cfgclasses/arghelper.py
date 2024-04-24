@@ -1,4 +1,5 @@
 """Module defining the arg() function for creating dataclass fields."""
+
 import dataclasses
 from typing import Any, Callable, Optional, Type, TypeVar, overload
 

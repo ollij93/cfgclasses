@@ -1,4 +1,5 @@
 """Example script using the validation feature of cfgclasses."""
+
 import dataclasses
 import sys
 

@@ -1,4 +1,5 @@
 """Example script using the mutually exclusive group feature of cfgclasses."""
+
 import dataclasses
 import logging
 import sys
