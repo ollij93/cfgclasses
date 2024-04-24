@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 import pytest
 
-from cfgclasses import ConfigClass, arg, cfgtransform
+from cfgclasses import arg, cfgtransform
 
 # =============================================================================
 # The test cases in this file are run both as regular test cases and as
@@ -20,7 +20,7 @@ def test_invalid_transform() -> None:
         return str(i)
 
     @dataclass
-    class TestClass(ConfigClass):
+    class TestClass:
         """Test class."""
 
         # Invalid assignment type
@@ -58,7 +58,7 @@ def test_invalid_cfgtransform() -> None:
     """Test that invalid types in config class transforms are identified."""
 
     @dataclass
-    class SubTestClass(ConfigClass):
+    class SubTestClass:
         """Sub test class."""
 
         field_x: str
@@ -67,7 +67,7 @@ def test_invalid_cfgtransform() -> None:
         return bytes(i)
 
     @dataclass
-    class TestClass(ConfigClass):
+    class TestClass:
         """Test class."""
 
         # No use of cfgtransform - should be fine
@@ -97,7 +97,7 @@ def test_invalid_choices() -> None:
     """Test that invalid types in choices are identified."""
 
     @dataclass
-    class TestClass(ConfigClass):
+    class TestClass:
         """Test class."""
 
         field: str = arg(  # E: [assignment]
@@ -113,7 +113,7 @@ def test_invalid_default() -> None:
     """Test that invalid types in defaults are identified."""
 
     @dataclass
-    class TestClass(ConfigClass):
+    class TestClass:
         """Test class."""
 
         field: str = arg(  # E: [assignment]
@@ -133,7 +133,7 @@ def test_incompatible_default_args() -> None:
     """Test that default and default_factory can't both be set."""
 
     @dataclass
-    class TestClass(ConfigClass):
+    class TestClass:
         """Test class."""
 
         field_a: str = arg(  # O: [call-overload]
@@ -151,7 +151,7 @@ def test_positional_optnames() -> None:
     """Test that option names can't be specified with a positional argument."""
 
     @dataclass
-    class TestClass(ConfigClass):
+    class TestClass:
         """Test class."""
 
         field_a: str = arg(  # O: [call-overload]

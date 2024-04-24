@@ -11,10 +11,10 @@ from .validation import validate_post_argparse, validator
 try:
     from _typeshed import DataclassInstance
 except ImportError:
-    DataclassInstance = None # type: ignore
+    DataclassInstance = None  # type: ignore
 
 _T = TypeVar("_T", bound=DataclassInstance)
-_U = TypeVar("_U", bound=DataclassInstance)
+_U = TypeVar("_U")
 
 __all__ = (
     "ConfigClass",
@@ -92,7 +92,12 @@ def parse_args_with_submodes(
     spec = Specification.from_class(cls)
     spec.add_to_parser(parser)
 
-    submode_specs = _add_submode_parsers(parser, submodes)
+    # mypy doesn't track the dataclass-ness of the submodes dict values properly
+    # so sanity check here and then cast to the correct type (mypy ignore)
+    for submode in submodes.values():
+        if not dataclasses.is_dataclass(submode):
+            raise TypeError(f"{submode} is not a dataclass")
+    submode_specs = _add_submode_parsers(parser, submodes)  # type:ignore
 
     namespace = parser.parse_args(argv)
     if submodes and not hasattr(namespace, "submode_name"):

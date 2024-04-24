@@ -346,7 +346,7 @@ def cfgtransform(
     transform: Callable[[_T], _U],
 ) -> _U:
     """
-    Create a field for a nested ConfigClass with a transform.
+    Create a field for a nested dataclass with a transform.
 
     :param transform_type: The type that the transform function takes as input.
     :param transform: The transform function to apply.

@@ -91,12 +91,8 @@ In this case ``--debug`` and ``--quiet`` are mutually exclusive, but ``--name`` 
 
 2. Implementation
 -----------------
-@@@ - Needs to be updated to reflect the new planned decorator
+A new ``@mutually_exclusive`` decorator is added that accepts a class and sets a marker attribute on that class.
 
-A new ``add_argument_group()`` classmethod is added to ``ConfigClass``. This method takes in a ``argparse`` group and adds and returns a new group to it. This method is then invoked after building the ``Specification`` for a ``ConfigClass``, prior to adding its members to the parser group.
+This marker attribute is then checked for when adding argument groups to argparse, using ``add_mutually_exclusive_group()`` instead of ``add_argument_group()`` if the attribute is set.
 
-The default implementation of this new function is to call and return ``add_argument_group()`` on the given parser.
-
-However, a new subclass of ``ConfigClass`` - ``MutuallyExclusiveConfigClass`` - overrides this method to instead invoke ``add_mutually_exclusive_group()`` on the given parser.
-
-Programmers can then subclass ``MutuallyExclusiveConfigClass`` to define a mutually exclusive group of configuration items rather than subclassing ``ConfigClass``.
+Programmers then simply need to use the decorator on their ``dataclass`` to specify that it is a mutually exclusive group.

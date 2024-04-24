@@ -1,4 +1,4 @@
-"""Module for defining the argument specification for a ConfigClass."""
+"""Module for defining the argument specification for a config class."""
 
 import abc
 import argparse
@@ -339,7 +339,7 @@ def _specitem_from_field(
 
 
 def _is_configcls_field(field: dataclasses.Field[Any]) -> bool:
-    """Check if the given field is a ConfigClass typed field."""
+    """Check if the given field is a class field to be treated as subcfg."""
     extraconfig = field.metadata.get(CFG_METADATA_FIELD)
     if isinstance(extraconfig, ConfigClassTransform):
         return True
@@ -367,14 +367,14 @@ def _spec_from_field(
 @dataclasses.dataclass
 class Specification(Generic[_DataclassInstanceT]):
     """
-    Representation of a ConfigClass in format suitable to pass to argparse.
+    Representation of a dataclass in format suitable to pass to argparse.
 
     This specification maps to an ArgumentGroup in argparse, each member
     SpecificationItem a call to add_argument() and each subspec another
     ArgumentGroup added with add_argument_group().
     """
 
-    #: The ConfigClass type this specification describes.
+    #: The dataclass type this specification describes.
     metatype: Type[_DataclassInstanceT]
     #: List of SpecificationItems for the members of this group.
     members: list[SpecificationItem[Any]]
