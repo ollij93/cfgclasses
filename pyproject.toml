@@ -97,7 +97,7 @@ suggestion-mode = true
 
 [tool.pylint.design]
 # Maximum number of arguments for function / method.
-max-args = 5
+max-args = 8 # Required for dataclass field wrappers
 
 # Maximum number of attributes for a class (see R0902).
 max-attributes = 7
@@ -159,7 +159,9 @@ confidence = ["HIGH", "CONTROL_FLOW", "INFERENCE", "INFERENCE_FAILURE", "UNDEFIN
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use "--disable=all --enable=classes
 # --disable=W".
-disable = []
+disable = [
+  "invalid-field-call", # Unusual use of field due to the nature of our design
+]
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
