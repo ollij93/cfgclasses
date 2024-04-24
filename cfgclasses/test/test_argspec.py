@@ -1,17 +1,12 @@
 """Unit-tests for the argspec module."""
+
 import argparse
 import dataclasses
-from typing import Any, Optional, Sequence, Type
+from typing import Any, Optional, Sequence, Type, TypeVar
 
 import pytest
 
-from cfgclasses import (
-    ConfigClass,
-    MutuallyExclusiveConfigClass,
-    arg,
-    cfgtransform,
-    optional,
-)
+from cfgclasses import arg, cfgtransform, mutually_exclusive, optional
 from cfgclasses.argspec import (
     BoolSpecItem,
     ListPositionalSpecItem,
@@ -25,12 +20,18 @@ from cfgclasses.argspec import (
     identity_transform,
 )
 
+try:
+    from _typeshed import DataclassInstance
+except ImportError:
+    DataclassInstance = None  # type: ignore
+_T = TypeVar("_T", bound=DataclassInstance)
+
 
 # =============================================================================
 # Fixtures used in unit tests
 # =============================================================================
 @dataclasses.dataclass
-class SimpleOptCase(ConfigClass):
+class SimpleOptCase:
     """Case with a simple required option."""
 
     strfield: str = arg("A simple string field")
@@ -56,7 +57,7 @@ simpleoptspec = Specification(
 
 
 @dataclasses.dataclass
-class OptionalOptCase(ConfigClass):
+class OptionalOptCase:
     """Case with an optional option."""
 
     optfield: Optional[str] = optional("An optional string field")
@@ -82,7 +83,7 @@ optionaloptspec = Specification(
 
 
 @dataclasses.dataclass
-class ListOptCase(ConfigClass):
+class ListOptCase:
     """Case with a list option."""
 
     # First case has no default or default_factory so is required
@@ -123,7 +124,7 @@ listoptspec = Specification(
 
 
 @dataclasses.dataclass
-class PositionalOptCase(ConfigClass):
+class PositionalOptCase:
     """Case with a positional option."""
 
     posfield: str = arg("A positional string field", positional=True)
@@ -160,7 +161,7 @@ posoptspec = Specification(
 # Additional complex case for positional argument to ensure they interact with
 # non-positional arguments as expected.
 @dataclasses.dataclass
-class PositionalAndOptionalCase(ConfigClass):
+class PositionalAndOptionalCase:
     """Case with a combination of positional and optional options."""
 
     strfield: str = arg("A simple string field")
@@ -232,7 +233,7 @@ posplusoptspec = Specification(
 
 
 @dataclasses.dataclass
-class ChoicesOptCase(ConfigClass):
+class ChoicesOptCase:
     """Case with a choices option."""
 
     choicefield: str = arg(
@@ -260,7 +261,7 @@ choicesoptspec = Specification(
 
 
 @dataclasses.dataclass
-class BooleanOptCase(ConfigClass):
+class BooleanOptCase:
     """Case with a store_true option."""
 
     boolfield: bool = arg("A boolean field")
@@ -300,7 +301,7 @@ storetrueoptspec = Specification(
 
 
 @dataclasses.dataclass
-class OptNameOptCase(ConfigClass):
+class OptNameOptCase:
     """Case with a custom option name."""
 
     strfield: str = arg("A simple string field", "-c", "--custom-name")
@@ -326,7 +327,7 @@ optnameoptspec = Specification(
 
 
 @dataclasses.dataclass
-class HasSubGroupCase(ConfigClass):
+class HasSubGroupCase:
     """Case with a subspec."""
 
     subspec: SimpleOptCase
@@ -340,8 +341,9 @@ hassubspec = Specification(
 )
 
 
+@mutually_exclusive
 @dataclasses.dataclass
-class MutuallyExclusiveGroup(MutuallyExclusiveConfigClass):
+class MutuallyExclusiveGroup:
     """Example mutually exclusive group."""
 
     opt_a: int = arg("Option A", default=0)
@@ -349,7 +351,7 @@ class MutuallyExclusiveGroup(MutuallyExclusiveConfigClass):
 
 
 @dataclasses.dataclass
-class HasMutuallyExclusiveGroupCase(ConfigClass):
+class HasMutuallyExclusiveGroupCase:
     """Case with a mutually exclusive subspec."""
 
     subspec: MutuallyExclusiveGroup
@@ -392,7 +394,7 @@ hasmutuallyexclusivegroup = Specification(
 
 
 @dataclasses.dataclass
-class TransformMembers(ConfigClass):
+class TransformMembers:
     """Example with a member that uses a transform."""
 
     opt_a: set[str] = arg("Option A", transform=set, transform_type=list[str])
@@ -418,7 +420,7 @@ transformgroup = Specification(
 
 
 @dataclasses.dataclass
-class TransformSubGroupCase(ConfigClass):
+class TransformSubGroupCase:
     """Case with a subspec to be transformed."""
 
     subspec: str = cfgtransform(SimpleOptCase, str)
@@ -469,7 +471,7 @@ test_spec_from_class_cases = {
     ids=test_spec_from_class_cases.keys(),
 )
 def test_spec_from_class(
-    configcls: Type[ConfigClass], expectedspec: Specification[ConfigClass]
+    configcls: Type[_T], expectedspec: Specification[_T]
 ) -> None:
     """
     Test the Specification.from_class function and internally the equivalent for
@@ -717,9 +719,9 @@ test_e2e_parser_cases = {
     ids=test_e2e_parser_cases.keys(),
 )
 def test_e2e_parser(
-    spec: Specification[ConfigClass],
+    spec: Specification[_T],
     args: Sequence[str],
-    expectedconfig: ConfigClass,
+    expectedconfig: _T,
 ) -> None:
     """
     Test the Specification.add_to_parser() and

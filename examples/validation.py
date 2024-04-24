@@ -1,16 +1,18 @@
 """Example script using the validation feature of cfgclasses."""
+
 import dataclasses
 import sys
 
-from cfgclasses import ConfigClass, arg
+from cfgclasses import arg, parse_args, validator
 
 
 @dataclasses.dataclass
-class Config(ConfigClass):
+class Config:
     """Config class for this example script."""
 
     natural: int = arg("A natural number")
 
+    @validator
     def validate(self) -> None:
         """Validate the provided number is a natural number."""
         if self.natural < 0:
@@ -22,5 +24,5 @@ class Config(ConfigClass):
 
 
 if __name__ == "__main__":
-    config = Config.parse_args(sys.argv[1:], prog="validation.py")
+    config = parse_args(Config, sys.argv[1:], prog="validation.py")
     config.run()

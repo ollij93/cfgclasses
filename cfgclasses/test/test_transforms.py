@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .. import ConfigClass, arg
+from .. import arg, parse_args
 from ..transforms import filebytes, filetext, jsonfile, picklefile
 
 
@@ -15,7 +15,7 @@ def test_file_content() -> None:
     """Test the file content transform usage."""
 
     @dataclass
-    class TestConfig(ConfigClass):
+    class TestConfig:
         """Test Config"""
 
         data: str = arg("Input data", transform=filetext, transform_type=Path)
@@ -28,8 +28,8 @@ def test_file_content() -> None:
         tmp.write(content)
         tmp.flush()
 
-        config = TestConfig.parse_args(
-            ["--data", tmp.name, "--bits", tmp.name]
+        config = parse_args(
+            TestConfig, ["--data", tmp.name, "--bits", tmp.name]
         )
         assert config.data == content
         assert config.bits == content.encode("utf-8")
@@ -39,7 +39,7 @@ def test_json() -> None:
     """Test the JSON file transform usage."""
 
     @dataclass
-    class TestConfig(ConfigClass):
+    class TestConfig:
         """Test Config"""
 
         data: Any = arg("Input data", transform=jsonfile, transform_type=Path)
@@ -49,7 +49,7 @@ def test_json() -> None:
         tmp.write(json.dumps(content))
         tmp.flush()
 
-        config = TestConfig.parse_args(["--data", tmp.name])
+        config = parse_args(TestConfig, ["--data", tmp.name])
         assert config.data == content
 
 
@@ -57,7 +57,7 @@ def test_pickle() -> None:
     """Test the pickle file transform usage."""
 
     @dataclass
-    class TestConfig(ConfigClass):
+    class TestConfig:
         """Test Config"""
 
         data: Any = arg(
@@ -69,5 +69,5 @@ def test_pickle() -> None:
         tmp.write(pickle.dumps(content))
         tmp.flush()
 
-        config = TestConfig.parse_args(["--data", tmp.name])
+        config = parse_args(TestConfig, ["--data", tmp.name])
         assert config.data == content

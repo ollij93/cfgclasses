@@ -10,7 +10,7 @@
 
 Strongly typed tool configuration classes for argument parsing.
 
-ConfigClasses are representations of a python tools CLI configuration options built on [dataclasses](https://docs.python.org/3/library/dataclasses.html). This allows individual tools to focus on specifying their configuration structure without the overhead of interacting with argparse and the typeless Namespace it returns.
+Config classes are representations of a python tools CLI configuration options built on [dataclasses](https://docs.python.org/3/library/dataclasses.html). This allows individual tools to focus on specifying their configuration structure without the overhead of interacting with argparse and the typeless Namespace it returns.
 
 See the [documnentation](https://ollij93.github.io/cfgclasses/) for full user guides and API references.
 
@@ -30,17 +30,17 @@ pip install cfgclasses
 
 ## Example Usage
 
-The following shows a simple script setup using a Config Class.
+The following shows a simple script setup using a Config class.
 
 ```python3
 import dataclasses
 import sys
-from cfgclasses import ConfigClass, arg, optional
+from cfgclasses import arg, optional, parse_args
 from pathlib import Path
 from typing import Optional
 
 @dataclasses.dataclass
-class Config(ConfigClass):
+class Config:
     # Simple options are required on the CLI
     intopt: int = arg("A simple integer field")
     inpath: Path = arg("A required Path field")
@@ -59,7 +59,7 @@ class Config(ConfigClass):
         ...
 
 if __name__ == '__main__':
-    config = Config.parse_args(sys.argv[1:], prog="example")
+    config = parse_args(Config, sys.argv[1:], prog="example")
     config.run()
 ```
 

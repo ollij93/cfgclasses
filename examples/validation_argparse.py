@@ -1,4 +1,5 @@
 """Example script not using cfgclasses and doing validation manually."""
+
 import argparse
 import sys
 

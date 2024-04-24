@@ -15,7 +15,7 @@ In more complex examples, a particular file format may be expected, and have its
 
 A note on defaults and choices etc.
 ###################################
-These transformations are limited to operation on the value read from the CLI. When constructing an instance of the ConfigClass through other mechanisms (such as the constructed provided by ``dataclasses``) the transformation is not applied.
+These transformations are limited to operation on the value read from the CLI. When constructing an instance of the dataclass through other mechanisms (such as the constructor provided by ``dataclasses``) the transformation is not applied.
 
 In order to support configuration options whose types match those of the CLI arguments (e.g. choices) the typing of those options must be updated to match the transformation (input) type.
 E.g. a transformation that accepts an ``int`` and returns a ``str`` would require the choices to be a list of ``int`` values, not their string representations.
@@ -49,8 +49,9 @@ Without the use of transforms, the config class definition would look like so:
 
 .. code-block:: python
 
+    @mutually_exclusive
     @dataclass
-    class LoggingConfig(MutuallyExclusiveConfigClass):
+    class LoggingConfig:
         debug: bool = arg("Enable debug logging")
         quiet: bool = arg("Disable info logging")
 
@@ -63,7 +64,7 @@ Without the use of transforms, the config class definition would look like so:
                 return logging.INFO
 
     @dataclass
-    class Config(ConfigClass):
+    class Config:
         log_level: LoggingConfig
 
 While this pattern is sufficient, it does have one major drawback: When manually constructing an instance of ``Config``, e.g. during testing, an invalid combination of ``debug`` and ``quiet`` can be used.
@@ -78,8 +79,9 @@ With the use of a class transform, this problem can be avoided.
 
 .. code-block:: python
 
+    @mutually_exclusive
     @dataclass
-    class LoggingConfig(MutuallyExclusiveConfigClass):
+    class LoggingConfig:
         debug: bool = arg("Enable debug logging")
         quiet: bool = arg("Disable info logging")
 
@@ -92,15 +94,15 @@ With the use of a class transform, this problem can be avoided.
                 return logging.INFO
 
     @dataclass
-    class Config(ConfigClass):
+    class Config:
         log_level: int = cfgtransform(LoggingConfig, LoggingConfig.log_level)
 
 In this case, the ``log_level`` configuration option is transformed from a ``LoggingConfig`` instance to an ``int`` using the ``LoggingConfig.log_level`` function used previously.
 While it is still possible to construct invalid instances of ``LoggingConfig``, it is no longer possible to construct an invalid instance of ``Config`` itself.
 
-Another pattern where these transform are useful is constructing more complex classes from simple ConfigClass definitions.
+Another pattern where these transform are useful is constructing more complex classes from simple dataclass definitions.
 Often a class definition may be out of the programmers control (e.g. part of a third party library) or the required functionality may mean that usage of a dataclass is not possible.
-In these cases, the programmer can define a simple ConfigClass with options sufficient to then build the more complex class from.
+In these cases, the programmer can define a simple dataclass with options sufficient to then build the more complex class from.
 
 .. code-block:: python
 
@@ -110,7 +112,7 @@ In these cases, the programmer can define a simple ConfigClass with options suff
             self.b = b
 
     @dataclass
-    class DataClassConfig(ConfigClass):
+    class DataClassConfig:
         a: int = arg("An int")
         b: str = arg("A string")
 
@@ -118,7 +120,7 @@ In these cases, the programmer can define a simple ConfigClass with options suff
             return NotADataClass(self.a, self.b)
 
     @dataclass
-    class Config(ConfigClass):
+    class Config:
         not_a_dataclass: NotADataClass = cfgtransform(
             DataClassConfig,
             DataClassConfig.to_not_a_dataclass,
@@ -133,17 +135,17 @@ The following changes are made to the design to support transformations:
 * These functions are also updated to accept the transformation type as an argument
 * The ``ConfigOpts`` class is updated to contain transformation function and transformation type members and is made to be Generic over the appropriate types, maintaining the type safety when using the transformations.
 * The ``ConfigOpts`` is also used to store the default value as this is now distinct from the value stored in the ``dataclasses`` field.
-* When building the ``Specification`` for a ``ConfigClass`` the transformation function and type are extracted from the ``ConfigOpts`` class and stored in the ``Specification``.
+* When building the ``Specification`` for a ``dataclass`` the transformation function and type are extracted from the ``ConfigOpts`` class and stored in the ``Specification``.
 
   * If not specified, the transformation function is set to the identity function and the transformation type is set to the type of the configuration option.
-* To build the ``ConfigClass`` from the CLI arguments, instead of directly assigning the value from the ``argparse.Namespace`` the transformation function is invoked with the value from the ``argparse.Namespace``.
+* To build the ``dataclass`` from the CLI arguments, instead of directly assigning the value from the ``argparse.Namespace`` the transformation function is invoked with the value from the ``argparse.Namespace``.
 
 For the class transformation, the following changes are made:
 
 * A new ``cfgtransform()`` function is added which takes a type and a transform function.
 * A new ``ConfigClassTransform`` type is defined to contain the type and transform function for classes.
 * The ``Specification`` is updated to check for this class in the dataclass metadata and store the transform information.
-* When building the ``ConfigClass`` from the CLI arguments, the transforms of each of its subspecs are invoked to apply the transformations.
+* When building the ``dataclass`` from the CLI arguments, the transforms of each of its subspecs are invoked to apply the transformations.
 
 4. Implementation and testing
 -----------------------------

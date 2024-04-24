@@ -24,16 +24,16 @@ A simple python application using cfgclasses looks like this:
 
     import dataclasses
     import sys
-    from cfgclasses import ConfigClass, arg
+    from cfgclasses import arg, parse_args
 
     @dataclasses.dataclass
-    class MyConfig(ConfigClass):
+    class MyConfig:
         """A simple example application"""
         name: str = arg("Your name")
         num: int = arg("An integer option", default=0)
 
     if __name__ == "__main__":
-        config = MyConfig.parse_args(sys.argv[1:])
+        config = parse_args(MyConfig, sys.argv[1:])
         print(f"Hello, {config.name}! Your number was: {config.num}")
 
 And an example run of this application:
@@ -65,16 +65,16 @@ The other common pattern is to use ``optional(helpstr)`` which is the same as ``
 
     import dataclasses
     import sys
-    from cfgclasses import ConfigClass, arg, optional
+    from cfgclasses import arg, optional, parse_args
 
     @dataclasses.dataclass
-    class MyConfig(ConfigClass):
+    class MyConfig:
         """A simple example application"""
         name: str = arg("Your name")
         num: Optional[int] = optional("An optional integer option")
 
     if __name__ == "__main__":
-        config = MyConfig.parse_args(sys.argv[1:])
+        config = parse_args(MyConfig, sys.argv[1:])
         print(f"Hello, {config.name}!")
         if config.num is not None:
             print(f"Your number was: {config.num}")
@@ -88,15 +88,15 @@ Boolean config attributes result in a flag which takes no value and defaults to 
 
     import dataclasses
     import sys
-    from cfgclasses import ConfigClass, arg
+    from cfgclasses import arg, parse_args
 
     @dataclasses.dataclass
-    class MyConfig(ConfigClass):
+    class MyConfig:
         """An example application with debug mode"""
         debug: bool
 
     if __name__ == "__main__":
-        config = MyConfig.parse_args(sys.argv[1:])
+        config = parse_args(MyConfig, sys.argv[1:])
         if config.debug:
             print("Debug mode enabled")
         print("Hello, world!")
@@ -127,7 +127,7 @@ Arguments can be restricted to a set of choices using the ``choices`` argument t
 
     import dataclasses
     import sys
-    from cfgclasses import ConfigClass, arg
+    from cfgclasses import arg, parse_args
 
     COLOURS = {
         "red": "#ff0000",
@@ -136,12 +136,12 @@ Arguments can be restricted to a set of choices using the ``choices`` argument t
     }
 
     @dataclasses.dataclass
-    class MyConfig(ConfigClass):
+    class MyConfig:
         """An example application with debug mode"""
         colour: str = arg("Your favourite colour", choices=COLOURS)
 
     if __name__ == "__main__":
-        config = MyConfig.parse_args(sys.argv[1:])
+        config = parse_args(MyConfig, sys.argv[1:])
         print(f"Your favourite colour is {config.colour} which is {COLOURS[config.colour]}")
 
 .. code-block:: bash
@@ -170,16 +170,16 @@ A configuration item that accepts a list of values will normally require at leas
 
     import dataclasses
     import sys
-    from cfgclasses import ConfigClass, arg
+    from cfgclasses import arg, parse_args
 
     @dataclasses.dataclass
-    class MyConfig(ConfigClass):
+    class MyConfig:
         """An example application with debug mode"""
         required: list[str] = arg("A required list of strings")
         optional: list[str] = arg("An optional list of strings", default_factory=list)
 
     if __name__ == "__main__":
-        config = MyConfig.parse_args(sys.argv[1:])
+        config = parse_args(MyConfig, sys.argv[1:])
         print(f"Required: {config.required}")
         print(f"Optional: {config.optional}")
 
