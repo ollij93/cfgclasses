@@ -2,19 +2,19 @@
 
 import argparse
 import dataclasses
-from typing import TYPE_CHECKING, Optional, Sequence, Type, TypeVar
+from typing import Optional, Sequence, Type, TypeVar
 
 from .argspec import CFG_MUTUALLY_EXCLUSIVE_ATTR, Specification
 from .validation import validate_post_argparse, validator_func
 
-if TYPE_CHECKING:
+# typeshed not available at runtime, only for type checking
+try:
     from _typeshed import DataclassInstance
+except ImportError:
+    DataclassInstance = None  # type: ignore
 
-    _T = TypeVar("_T", bound=DataclassInstance)
-    _U = TypeVar("_U", bound=DataclassInstance)
-else:
-    _T = TypeVar("_T")
-    _U = TypeVar("_U")
+_T = TypeVar("_T", bound=DataclassInstance)
+_U = TypeVar("_U", bound=DataclassInstance)
 
 __all__ = (
     "ConfigClass",

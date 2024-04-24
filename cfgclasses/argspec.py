@@ -4,7 +4,6 @@ import abc
 import argparse
 import dataclasses
 from typing import (
-    TYPE_CHECKING,
     Any,
     Callable,
     Generic,
@@ -17,14 +16,13 @@ from typing import (
     get_origin,
 )
 
-if TYPE_CHECKING:
+# typeshed not available at runtime, only for type checking
+try:
     from _typeshed import DataclassInstance
+except ImportError:
+    DataclassInstance = None  # type: ignore
 
-    _DataclassInstanceT = TypeVar(
-        "_DataclassInstanceT", bound=DataclassInstance
-    )
-else:
-    _DataclassInstanceT = TypeVar("_DataclassInstanceT")
+_DataclassInstanceT = TypeVar("_DataclassInstanceT", bound=DataclassInstance)
 
 __all__ = (
     "CFG_METADATA_FIELD",
