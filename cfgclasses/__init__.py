@@ -36,10 +36,12 @@ key ``cfgclasses.CFG_METADATA_FIELD``.
 There is an additional submodule :mod:`cfgclasses.transforms` containing several
 common transform functions. See below.
 
-Finally, the following class decorator is provided to allow the creation of
-mutually exclusive groups of options.
+Finally, the following decorators are provided to allow the creation of
+mutually exclusive groups of options, and adding validation functions to a
+config class definition respectively.
 
 .. autofunction:: cfgclasses.mutually_exclusive
+.. autofunction:: cfgclasses.validator
 
 cfgclasses.transforms
 ---------------------
