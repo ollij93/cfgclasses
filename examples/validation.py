@@ -2,7 +2,7 @@
 import dataclasses
 import sys
 
-from cfgclasses import arg, parse_args, validator_func
+from cfgclasses import arg, parse_args, validator
 
 
 @dataclasses.dataclass
@@ -11,7 +11,7 @@ class Config:
 
     natural: int = arg("A natural number")
 
-    @validator_func
+    @validator
     def validate(self) -> None:
         """Validate the provided number is a natural number."""
         if self.natural < 0:

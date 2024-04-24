@@ -5,13 +5,13 @@ import dataclasses
 from typing import Optional, Sequence, Type, TypeVar
 
 from .argspec import CFG_MUTUALLY_EXCLUSIVE_ATTR, Specification
-from .validation import validate_post_argparse, validator_func
+from .validation import validate_post_argparse, validator
 
 # typeshed not available at runtime, only for type checking
 try:
     from _typeshed import DataclassInstance
 except ImportError:
-    DataclassInstance = None  # type: ignore
+    DataclassInstance = None # type: ignore
 
 _T = TypeVar("_T", bound=DataclassInstance)
 _U = TypeVar("_U", bound=DataclassInstance)
@@ -154,7 +154,7 @@ class ConfigClass:
 
     # Register the validate() method as a validator for subclasses to keep
     # consistent API with old versions.
-    @validator_func
+    @validator
     def _cfgclass_default_validator(self) -> None:
         """Validate the config class instance raising a ValueError if invalid."""
         if hasattr(self, "validate"):

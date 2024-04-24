@@ -8,10 +8,10 @@ _T = TypeVar("_T")
 
 CFG_VALIDATOR_FUNC_ATTR = "__cfgclass_validator_func__"
 
-__all__ = ("validator_func",)
+__all__ = ("validator",)
 
 
-def validator_func(func: Callable[[_T], None]) -> Callable[[_T], None]:
+def validator(func: Callable[[_T], None]) -> Callable[[_T], None]:
     """
     Decorator to mark a function as a validator for a config class.
 
