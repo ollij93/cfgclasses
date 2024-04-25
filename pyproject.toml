@@ -77,6 +77,12 @@ strict_equality = true
 # Show error codes - useful to be able to ignore specific errors
 show_error_codes = true
 
+[tool.coverage.run]
+source = ["."]
+
+[tool.coverage.report]
+omit = ["./venv/*"]
+
 #===============================================================================
 # PYLINT
 #===============================================================================

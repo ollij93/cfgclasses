@@ -114,3 +114,7 @@ For further examples see the [examples](examples) subdirectory.
 ## License
 
 CFG-Classes is distributed under the terms of the [MIT](LICENSE) license.
+
+## Contribution
+
+See the [contribution page](https://ollij93.github.io/cfgclasses/contribution.html).
