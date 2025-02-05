@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Contributing &#8212; cfgclasses 2.3.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="_static/documentation_options.js?v=c3c8ae58"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Validators" href="designs/validators.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="designs/validators.html" title="Validators"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">cfgclasses 2.3.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Contributing</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="contributing">
+<h1>Contributing<a class="headerlink" href="#contributing" title="Link to this heading">¶</a></h1>
+<p>If you would like to contribute to this project, please follow the following steps:</p>
+<ol class="arabic simple">
+<li><p>Fork this repository</p></li>
+<li><p>Create a new branch for your feature or bugfix</p></li>
+<li><p>Make your changes</p></li>
+<li><p>Commit your changes</p></li>
+<li><p>Push your changes to your fork</p></li>
+<li><p>Create a pull request</p></li>
+</ol>
+<p>Please make sure to follow the coding standards and conventions used throughout the project. Also, please make sure to write tests for your code.</p>
+</section>
+<section id="create-a-virtual-environment">
+<h1>Create a virtual environment<a class="headerlink" href="#create-a-virtual-environment" title="Link to this heading">¶</a></h1>
+<p>Create a virtual environment and install the required dependencies using the following commands:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>venv
+venv$<span class="w"> </span><span class="nb">source</span><span class="w"> </span>venv/bin/activate
+venv$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>.<span class="o">[</span>dependencies<span class="o">]</span><span class="w"> </span>.<span class="o">[</span>dev-dependencies<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="running-the-tests">
+<h1>Running the tests<a class="headerlink" href="#running-the-tests" title="Link to this heading">¶</a></h1>
+<p>Tests can be run using the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>venv$<span class="w"> </span>bin/run_tests.sh
+<span class="o">=======================================</span><span class="w"> </span><span class="nb">test</span><span class="w"> </span>session<span class="w"> </span><span class="nv">starts</span><span class="w"> </span><span class="o">=======================================</span>
+platform<span class="w"> </span>darwin<span class="w"> </span>--<span class="w"> </span>Python<span class="w"> </span><span class="m">3</span>.10.4,<span class="w"> </span>pytest-7.4.2,<span class="w"> </span>pluggy-1.3.0
+rootdir:<span class="w"> </span>/Users/olijohns/cfgclasses
+plugins:<span class="w"> </span>anyio-4.3.0,<span class="w"> </span>mypy-testing-0.1.1
+collected<span class="w"> </span><span class="m">60</span><span class="w"> </span>items
+
+cfgclasses/test/test_argspec.py<span class="w"> </span>....................................<span class="w">                        </span><span class="o">[</span><span class="w"> </span><span class="m">60</span>%<span class="o">]</span>
+cfgclasses/test/test_configclass.py<span class="w"> </span>....<span class="w">                                                    </span><span class="o">[</span><span class="w"> </span><span class="m">66</span>%<span class="o">]</span>
+cfgclasses/test/test_deprecated_api.py<span class="w"> </span>.....<span class="w">                                                </span><span class="o">[</span><span class="w"> </span><span class="m">75</span>%<span class="o">]</span>
+cfgclasses/test/test_transforms.py<span class="w"> </span>...<span class="w">                                                      </span><span class="o">[</span><span class="w"> </span><span class="m">80</span>%<span class="o">]</span>
+cfgclasses/test/test_typing.py<span class="w"> </span>............<span class="w">                                                 </span><span class="o">[</span><span class="m">100</span>%<span class="o">]</span>
+
+<span class="o">=======================================</span><span class="w"> </span><span class="m">60</span><span class="w"> </span>passed<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="m">3</span>.07s<span class="w"> </span><span class="o">========================================</span>
+Wrote<span class="w"> </span>XML<span class="w"> </span>report<span class="w"> </span>to<span class="w"> </span>coverage.xml
+Name<span class="w">                                     </span>Stmts<span class="w">   </span>Miss<span class="w">  </span>Cover<span class="w">   </span>Missing
+----------------------------------------------------------------------
+cfgclasses/__init__.py<span class="w">                       </span><span class="m">6</span><span class="w">      </span><span class="m">0</span><span class="w">   </span><span class="m">100</span>%
+cfgclasses/arghelper.py<span class="w">                     </span><span class="m">58</span><span class="w">      </span><span class="m">1</span><span class="w">    </span><span class="m">98</span>%<span class="w">   </span><span class="m">323</span>
+cfgclasses/argspec.py<span class="w">                      </span><span class="m">162</span><span class="w">      </span><span class="m">3</span><span class="w">    </span><span class="m">98</span>%<span class="w">   </span><span class="m">334</span>,<span class="w"> </span><span class="m">348</span>-349
+cfgclasses/configclass.py<span class="w">                   </span><span class="m">66</span><span class="w">      </span><span class="m">2</span><span class="w">    </span><span class="m">97</span>%<span class="w">   </span><span class="m">88</span>,<span class="w"> </span><span class="m">98</span>
+cfgclasses/test/__init__.py<span class="w">                  </span><span class="m">0</span><span class="w">      </span><span class="m">0</span><span class="w">   </span><span class="m">100</span>%
+cfgclasses/test/test_argspec.py<span class="w">             </span><span class="m">86</span><span class="w">      </span><span class="m">0</span><span class="w">   </span><span class="m">100</span>%
+cfgclasses/test/test_configclass.py<span class="w">         </span><span class="m">59</span><span class="w">      </span><span class="m">0</span><span class="w">   </span><span class="m">100</span>%
+cfgclasses/test/test_deprecated_api.py<span class="w">      </span><span class="m">61</span><span class="w">      </span><span class="m">0</span><span class="w">   </span><span class="m">100</span>%
+cfgclasses/test/test_transforms.py<span class="w">          </span><span class="m">40</span><span class="w">      </span><span class="m">0</span><span class="w">   </span><span class="m">100</span>%
+cfgclasses/test/test_typing.py<span class="w">              </span><span class="m">57</span><span class="w">      </span><span class="m">0</span><span class="w">   </span><span class="m">100</span>%
+cfgclasses/transforms.py<span class="w">                    </span><span class="m">13</span><span class="w">      </span><span class="m">0</span><span class="w">   </span><span class="m">100</span>%
+cfgclasses/validation.py<span class="w">                    </span><span class="m">29</span><span class="w">      </span><span class="m">0</span><span class="w">   </span><span class="m">100</span>%
+----------------------------------------------------------------------
+TOTAL<span class="w">                                      </span><span class="m">637</span><span class="w">      </span><span class="m">6</span><span class="w">    </span><span class="m">99</span>%
+</pre></div>
+</div>
+<p>Code coverage should be as close to 100% as possible. Only minor error flows are skipped in the current code.</p>
+</section>
+<section id="run-the-formatters-linters">
+<h1>Run the formatters linters<a class="headerlink" href="#run-the-formatters-linters" title="Link to this heading">¶</a></h1>
+<p>Linters can be run using the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>venv$<span class="w"> </span>bin/run_tools.sh
+All<span class="w"> </span><span class="k">done</span>!<span class="w"> </span>✨<span class="w"> </span>🍰<span class="w"> </span>✨
+<span class="m">17</span><span class="w"> </span>files<span class="w"> </span>left<span class="w"> </span>unchanged.
+Skipped<span class="w"> </span><span class="m">5</span><span class="w"> </span>files
+Success:<span class="w"> </span>no<span class="w"> </span>issues<span class="w"> </span>found<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="m">16</span><span class="w"> </span><span class="nb">source</span><span class="w"> </span>files
+
+--------------------------------------------------------------------
+Your<span class="w"> </span>code<span class="w"> </span>has<span class="w"> </span>been<span class="w"> </span>rated<span class="w"> </span>at<span class="w"> </span><span class="m">10</span>.00/10<span class="w"> </span><span class="o">(</span>previous<span class="w"> </span>run:<span class="w"> </span><span class="m">10</span>.00/10,<span class="w"> </span>+0.00<span class="o">)</span>
+</pre></div>
+</div>
+</section>
+<section id="build-the-documentation">
+<h1>Build the documentation<a class="headerlink" href="#build-the-documentation" title="Link to this heading">¶</a></h1>
+<p>The documentation can be built using the following command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>venv$<span class="w"> </span>bin/build_docs.sh
+Running<span class="w"> </span>Sphinx<span class="w"> </span>v7.2.5
+loading<span class="w"> </span>pickled<span class="w"> </span>environment...<span class="w"> </span><span class="k">done</span>
+building<span class="w"> </span><span class="o">[</span>mo<span class="o">]</span>:<span class="w"> </span>targets<span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="m">0</span><span class="w"> </span>po<span class="w"> </span>files<span class="w"> </span>that<span class="w"> </span>are<span class="w"> </span>out<span class="w"> </span>of<span class="w"> </span>date
+writing<span class="w"> </span>output...
+building<span class="w"> </span><span class="o">[</span>html<span class="o">]</span>:<span class="w"> </span>targets<span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="nb">source</span><span class="w"> </span>files<span class="w"> </span>that<span class="w"> </span>are<span class="w"> </span>out<span class="w"> </span>of<span class="w"> </span>date
+updating<span class="w"> </span>environment:<span class="w"> </span><span class="m">1</span><span class="w"> </span>added,<span class="w"> </span><span class="m">8</span><span class="w"> </span>changed,<span class="w"> </span><span class="m">0</span><span class="w"> </span>removed
+reading<span class="w"> </span>sources...<span class="w"> </span><span class="o">[</span><span class="m">100</span>%<span class="o">]</span><span class="w"> </span>index
+looking<span class="w"> </span><span class="k">for</span><span class="w"> </span>now-outdated<span class="w"> </span>files...<span class="w"> </span>none<span class="w"> </span>found
+pickling<span class="w"> </span>environment...<span class="w"> </span><span class="k">done</span>
+checking<span class="w"> </span>consistency...<span class="w"> </span><span class="k">done</span>
+preparing<span class="w"> </span>documents...<span class="w"> </span><span class="k">done</span>
+copying<span class="w"> </span>assets...<span class="w"> </span>copying<span class="w"> </span>static<span class="w"> </span>files...<span class="w"> </span><span class="k">done</span>
+copying<span class="w"> </span>extra<span class="w"> </span>files...<span class="w"> </span><span class="k">done</span>
+<span class="k">done</span>
+writing<span class="w"> </span>output...<span class="w"> </span><span class="o">[</span><span class="m">100</span>%<span class="o">]</span><span class="w"> </span>index
+generating<span class="w"> </span>indices...<span class="w"> </span>genindex<span class="w"> </span>py-modindex<span class="w"> </span><span class="k">done</span>
+writing<span class="w"> </span>additional<span class="w"> </span>pages...<span class="w"> </span>search<span class="w"> </span><span class="k">done</span>
+copying<span class="w"> </span>images...<span class="w"> </span><span class="o">[</span><span class="m">100</span>%<span class="o">]</span><span class="w"> </span>_static/icon.png
+dumping<span class="w"> </span>search<span class="w"> </span>index<span class="w"> </span><span class="k">in</span><span class="w"> </span>English<span class="w"> </span><span class="o">(</span>code:<span class="w"> </span>en<span class="o">)</span>...<span class="w"> </span><span class="k">done</span>
+dumping<span class="w"> </span>object<span class="w"> </span>inventory...<span class="w"> </span><span class="k">done</span>
+build<span class="w"> </span>succeeded.
+
+The<span class="w"> </span>HTML<span class="w"> </span>pages<span class="w"> </span>are<span class="w"> </span><span class="k">in</span><span class="w"> </span>_build/html.
+</pre></div>
+</div>
+<p>This can then be viewed locally by opening the <cite>_build/html/index.html</cite> file in a web browser.
+E.g. with <code class="docutils literal notranslate"><span class="pre">python3</span> <span class="pre">-m</span> <span class="pre">http.server</span></code> and navigating to <a class="reference external" href="http://localhost:8000/_build/html/index.html">http://localhost:8000/_build/html/index.html</a></p>
+</section>
+<section id="building-the-package-for-deployment">
+<h1>Building the package for deployment<a class="headerlink" href="#building-the-package-for-deployment" title="Link to this heading">¶</a></h1>
+<p>The package can be built and deployed to pypi using the following commands.</p>
+<p>Be sure to bump the version number in <code class="docutils literal notranslate"><span class="pre">pyproject.toml</span></code> and <code class="docutils literal notranslate"><span class="pre">docs/source/conf.py</span></code> before release.
+Similarly, be sure to tag the git commit for the release with the version number.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>venv$<span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>hatch<span class="w"> </span>twine<span class="w"> </span>pkginfo
+venv$<span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>build
+venv$<span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>twine<span class="w"> </span>upload<span class="w"> </span>--repository<span class="w"> </span>testpypi<span class="w"> </span>dist/*<span class="w"> </span><span class="c1"># To test the upload</span>
+venv$<span class="w"> </span>python3<span class="w"> </span>-m<span class="w"> </span>twine<span class="w"> </span>upload<span class="w"> </span>dist/*<span class="w"> </span><span class="c1"># To upload to pypi</span>
+</pre></div>
+</div>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Contributing</a></li>
+<li><a class="reference internal" href="#create-a-virtual-environment">Create a virtual environment</a></li>
+<li><a class="reference internal" href="#running-the-tests">Running the tests</a></li>
+<li><a class="reference internal" href="#run-the-formatters-linters">Run the formatters linters</a></li>
+<li><a class="reference internal" href="#build-the-documentation">Build the documentation</a></li>
+<li><a class="reference internal" href="#building-the-package-for-deployment">Building the package for deployment</a></li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="designs/validators.html"
+                          title="previous chapter">Validators</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/contribution.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="designs/validators.html" title="Validators"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">cfgclasses 2.3.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Contributing</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2023, Olli Johnson.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

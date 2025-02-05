@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Design &#8212; cfgclasses 2.3.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="_static/documentation_options.js?v=c3c8ae58"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="https://unpkg.com/mermaid@10.2.0/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad:true});</script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Mutually Exclusive Groups" href="designs/mutually_exclusive_groups.html" />
+    <link rel="prev" title="API" href="api.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="designs/mutually_exclusive_groups.html" title="Mutually Exclusive Groups"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="api.html" title="API"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">cfgclasses 2.3.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Design</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="design">
+<h1>Design<a class="headerlink" href="#design" title="Link to this heading">¶</a></h1>
+<p>This page provides design details for the <code class="docutils literal notranslate"><span class="pre">cfgclasses</span></code> module.</p>
+<section id="problem-definition">
+<h2>1. Problem Definition<a class="headerlink" href="#problem-definition" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>This project - <code class="docutils literal notranslate"><span class="pre">cfgclasses</span></code> - aims to solve several issues around the development of command line interfaces (CLIs) in Python using argparse. These issues are:</dt><dd><ul class="simple">
+<li><p>The output from argparse is a typeless namespace allowing <code class="docutils literal notranslate"><span class="pre">mypy</span></code> to miss typing bugs</p></li>
+<li><p>Defining a tools CLI using argparse’s <code class="docutils literal notranslate"><span class="pre">add_argument()</span></code> method involves repetetive boilerplate code</p></li>
+</ul>
+</dd>
+</dl>
+<p>The impact of the type safety issue can be minimised by carefully structuring a tools entry points, however for smaller tools this is often frustrating and distracts from the core functionality of the tool. <code class="docutils literal notranslate"><span class="pre">cfgclasses</span></code> provides a 100% type safe interface for defining a tools CLI, and allows the programmer to focus on the structure of the configuration rather than the structure of the CLI.</p>
+<p>The boilerplate issue is more of a problem for larger tools, but can be a significant issue for smaller tools as well. Often the structure of this boilerplate code leads to focus on the tools interface, and less on what the configuration structure of the tool is. This can lead to maintainability issues where new options are added without consideration for the impact on the overall configuration structure, resulting in invalid configurations being possible but not being caught. This is a natural outcome of the structure of <code class="docutils literal notranslate"><span class="pre">argparse</span></code>: the programmer defines the CLI for the tool, and then the namespace is generated from this definition. <code class="docutils literal notranslate"><span class="pre">cfgclasses</span></code> reverses this focus: the configuration structure is defined first, and the CLI is generated from this.</p>
+<p>Adding to the boilerplate issue is the fact there are common patterns that appear in the usage of argparse’s <code class="docutils literal notranslate"><span class="pre">add_argument()</span></code> method, yet no central utility methods exist to encapsulate these patterns. In larger projects, utilities can be specified within the project itself for common argument patterns (e.g. file paths, boolean flags, etc), however for smaller projects this is not practical. <code class="docutils literal notranslate"><span class="pre">cfgclasses</span></code> aims to provide centralised utilities for common argument patterns.</p>
+<p>Similarly, groups of tools which accept similar groups of arguments often duplicate code as building an <code class="docutils literal notranslate"><span class="pre">argparse.ArgumentParser</span></code> does not lead to natural code reuse. <code class="docutils literal notranslate"><span class="pre">cfgclasses</span></code> uses nested <code class="docutils literal notranslate"><span class="pre">dataclass</span></code> definitions (encapsulation), aiming to make code reuse easier and more natural. This same encapsulation also allows for logical grouping of configuration items and methods associated with these items, which can be useful for tools with large numbers of options.</p>
+<section id="inspiration-dataclasses">
+<h3>1.1 Inspiration - <code class="docutils literal notranslate"><span class="pre">dataclasses</span></code><a class="headerlink" href="#inspiration-dataclasses" title="Link to this heading">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">dataclasses</span></code> module was introduced in Python 3.7, and provides a decorator that allows the definition of classes with minimal boilerplate. The <code class="docutils literal notranslate"><span class="pre">dataclasses</span></code> module is not a replacement for classes, but rather a tool to reduce the boilerplate required to define classes whose primary focus is to define a collection of stored data.</p>
+<p><code class="docutils literal notranslate"><span class="pre">cfgclasses</span></code> aims to build upon the <code class="docutils literal notranslate"><span class="pre">dataclasses</span></code> module to provide a similar interface that allows the definition of classes that represent the configuration of a tool. In the same way that dataclasses for not replace regular classes, <code class="docutils literal notranslate"><span class="pre">cfgclasses</span></code> does not aim to replace <code class="docutils literal notranslate"><span class="pre">argparse</span></code>, but rather to provide a more configuration-structure-first focussed interface for programmers building CLI tools.</p>
+</section>
+<section id="summary">
+<h3>1.2 Summary<a class="headerlink" href="#summary" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>In summary, <code class="docutils literal notranslate"><span class="pre">cfgclasses</span></code> aims to provide the following:</dt><dd><ul class="simple">
+<li><p>A 100% type safe interface for defining a tools CLI</p></li>
+<li><p>A configuration-structure-first focussed interface for defining a tools CLI</p></li>
+<li><p>Centralised utilities for common argument patterns</p></li>
+</ul>
+</dd>
+</dl>
+<p><code class="docutils literal notranslate"><span class="pre">cfgclasses</span></code> does not aim to replace argparse, but to build upon it with the use of the <code class="docutils literal notranslate"><span class="pre">dataclasses</span></code> module.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">cfgclasses</span></code> module is not a replacement for <code class="docutils literal notranslate"><span class="pre">argparse</span></code> and there are features of argparse which are not currently, and may never be, supported.</p>
+</div>
+</section>
+</section>
+<section id="design-overview">
+<h2>2. Design Overview<a class="headerlink" href="#design-overview" title="Link to this heading">¶</a></h2>
+<p>This sections describes the high-level flow of the <code class="docutils literal notranslate"><span class="pre">cfgclasses</span></code> module. The subsections then go on to describe each step in the flow in greater detail including descriptions of the key classes and methods involved.</p>
+<section id="high-level-flow">
+<h3>2.1 High-level flow<a class="headerlink" href="#high-level-flow" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>The high-level design of <code class="docutils literal notranslate"><span class="pre">cfgclasses</span></code> is as follows:</dt><dd><ul class="simple">
+<li><p>A programmer defines their tools configuration in a class using the <code class="docutils literal notranslate"><span class="pre">dataclasses.dataclass</span></code> decorator.</p></li>
+<li><p>The programmer calls the <code class="docutils literal notranslate"><span class="pre">cfgclasses.parse_args()</span></code> method on this class with the CLI arguments.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">parse_args()</span></code> method performs the following internal flow:</p>
+<ol class="arabic simple">
+<li><p>Creates a <code class="docutils literal notranslate"><span class="pre">Specification</span></code> instance from the class definition.</p></li>
+<li><p>Builds an <code class="docutils literal notranslate"><span class="pre">argparse.ArgumentParser</span></code> instance from the <code class="docutils literal notranslate"><span class="pre">Specification</span></code> instance.</p></li>
+<li><p>Parses the CLI arguments using this <code class="docutils literal notranslate"><span class="pre">argparse.ArgumentParser</span></code>.</p></li>
+<li><p>Reads from the <code class="docutils literal notranslate"><span class="pre">argparse.Namespace</span></code> output to create an instance of the programmers <code class="docutils literal notranslate"><span class="pre">dataclass</span></code>.</p></li>
+</ol>
+</li>
+</ul>
+</dd>
+</dl>
+<p>Note that step (3) is entirely handled by the <code class="docutils literal notranslate"><span class="pre">argparse</span></code> module. Steps (1), (2) and (4) are each discussed further in the following subsections.</p>
+<div class="mermaid">
+            ---
+title: cfgclasses::parse_args(cls, argv)
+---
+flowchart LR
+    A[&quot;`Create a _Specification_`&quot;]:::internal
+    B[&quot;`Build the _ArgumentParser_`&quot;]:::internal
+    C[&quot;`Parse CLI into _Namespace_`&quot;]:::external
+    D[&quot;`Instantiate the _dataclass_`&quot;]:::internal
+    A --&gt; B
+    B --&gt; C
+    C --&gt; D
+    classDef internal stroke:#00f,fill:#ddf
+    classDef external stroke:#0f0,fill:#dfd
+        </div><dl class="simple">
+<dt>The <code class="docutils literal notranslate"><span class="pre">Specification</span></code> class is a representation of the <code class="docutils literal notranslate"><span class="pre">dataclass</span></code> definition, where each item of config is expressed by a <code class="docutils literal notranslate"><span class="pre">SpecificationItem</span></code> which has attributes mapping directly to the arguments accepted by <code class="docutils literal notranslate"><span class="pre">argparse.ArgumentParser.add_argument()</span></code>. Creating this specification of the arguments separately from the creation and population of the <code class="docutils literal notranslate"><span class="pre">Specification</span></code> benefits the code flow in a number of ways:</dt><dd><ul class="simple">
+<li><p>keeps the most complex logic away from the interaction with <code class="docutils literal notranslate"><span class="pre">argparse</span></code>, simplifying the code and the testing</p></li>
+<li><p>puts this complex logic in pure functions, further improving the testability</p></li>
+<li><p>simplifies the code path for nested configuration definitions as no branching is required</p></li>
+</ul>
+</dd>
+</dl>
+<p>In addition to this <code class="docutils literal notranslate"><span class="pre">parse_args()</span></code> definition, the public API also includes <code class="docutils literal notranslate"><span class="pre">ConfigOpts</span></code> and <code class="docutils literal notranslate"><span class="pre">NonPositionalConfigOpts</span></code> classes (where the latter is a subclass of the former) which can be used to customize the options for a field in the <code class="docutils literal notranslate"><span class="pre">dataclass</span></code> definition. These are stored in the <code class="docutils literal notranslate"><span class="pre">dataclasses.field()</span></code> metadata for the field.</p>
+<p>Furthermore, a collection of helper functions for common patterns are provided, as well as an <code class="docutils literal notranslate"><span class="pre">arg()</span></code> function which creates the <code class="docutils literal notranslate"><span class="pre">dataclasses</span></code> field and inserts a <code class="docutils literal notranslate"><span class="pre">ConfigOpts</span></code> instance into the metadata in one convenient call. As such, it is expected that a programmer will not need to directly interact with the <code class="docutils literal notranslate"><span class="pre">ConfigOpts</span></code> classes, but rather will use the <code class="docutils literal notranslate"><span class="pre">arg()</span></code> function and the helper functions. Only when a programmer wants finer control over the <code class="docutils literal notranslate"><span class="pre">dataclasses</span></code> field definition will they need to manually create a <code class="docutils literal notranslate"><span class="pre">ConfigOpts</span></code> instance.</p>
+</section>
+<section id="building-the-specification">
+<h3>2.2. Building the specification<a class="headerlink" href="#building-the-specification" title="Link to this heading">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">Specification</span></code> is built from the <code class="docutils literal notranslate"><span class="pre">dataclass</span></code> definition by using the <code class="docutils literal notranslate"><span class="pre">dataclasses</span></code> module to inspect the class definition and producing a <code class="docutils literal notranslate"><span class="pre">SpecificationItem</span></code> for each field in the class, or another <code class="docutils literal notranslate"><span class="pre">Specification</span></code> instance for each nested <code class="docutils literal notranslate"><span class="pre">dataclass</span></code>. &#64;&#64;&#64; Is this nesting a problem?</p>
+<div class="mermaid">
+            ---
+title: Specification Class Diagram
+---
+classDiagram
+    direction LR
+    namespace cfgclasses {
+        class Specification
+        class SpecificationItem
+        class StandardSpecItem
+        class OptionalSpecItem
+        class BoolSpecItem
+        class ListSpecItem
+        class PositionalSpecItem
+        class ListPositionalSpecItem
+    }
+    class Specification {
+        metatype: Type[ToolsConfig]
+        members: list[SpecificationItem]
+        subspecs: list[Specification]
+        add_to_parser(parser: argparse.ArgumentParser)
+    }
+    class SpecificationItem {
+        name: str
+        type: Type
+        help: str
+        metavar: str
+        choices: list
+        default: Any
+        add_to_parser(parser: argparse.ArgumentParser)
+        get_optnames() list[str]
+        get_kwargs() dict[str, Any]
+
+    }
+
+    ToolsConfig &quot;1&quot; ..o Specification: metatype
+    Specification *-- &quot;0..n&quot; SpecificationItem: members
+    Specification *-- &quot;0..n&quot; Specification: subspecs
+
+    class StandardSpecItem {
+        optnames: list[str]
+        get_optnames() list[str]
+    }
+    SpecificationItem &lt;|-- StandardSpecItem
+
+    class OptionalSpecItem {
+        get_kwargs() dict[str, Any]
+    }
+    StandardSpecItem &lt;|-- OptionalSpecItem
+
+    class BoolSpecItem {
+        get_kwargs() dict[str, Any]
+    }
+    StandardSpecItem &lt;|-- BoolSpecItem
+
+    class ListSpecItem {
+        get_kwargs() dict[str, Any]
+    }
+    StandardSpecItem &lt;|-- ListSpecItem
+
+    class PositionalSpecItem {
+        get_optnames() list[str]
+        get_kwargs() dict[str, Any]
+    }
+    SpecificationItem &lt;|-- PositionalSpecItem
+
+    class ListPositionalSpecItem {
+        get_kwargs() dict[str, Any]
+    }
+    PositionalSpecItem &lt;|-- ListPositionalSpecItem
+
+    %% External items
+    class ToolsConfig {
+        &lt;&lt;dataclass&gt;&gt;
+        tool_option_a: int
+        tool_option_b: str
+    }
+        </div><dl class="simple">
+<dt>The <code class="docutils literal notranslate"><span class="pre">SpecificationItem</span></code> is an abstract base class consisting of:</dt><dd><ul class="simple">
+<li><p>a name for the field</p></li>
+<li><p>a type for the field</p></li>
+<li><p>an optional help string for the field</p></li>
+<li><p>an optional metavar name for the field</p></li>
+<li><p>an optional list of valid choices for the field</p></li>
+<li><p>an optional default value for the field</p></li>
+</ul>
+</dd>
+<dt>It contains the the following methods:</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">get_optnames()</span></code> - returns a list of option names</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_kwargs()</span></code> - returns a dictionary of keyword arguments</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">add_to_parser()</span></code> - adds an argument to the given parser using the <code class="docutils literal notranslate"><span class="pre">get_optnames()</span></code> and <code class="docutils literal notranslate"><span class="pre">get_kwargs()</span></code> methods</p></li>
+</ul>
+</dd>
+<dt>There are then several subclasses of <code class="docutils literal notranslate"><span class="pre">SpecificationItem</span></code> which are used to represent the different types of fields that can be defined in a <code class="docutils literal notranslate"><span class="pre">dataclass</span></code> supported by <code class="docutils literal notranslate"><span class="pre">cfgclasses</span></code>. These subclasses are:</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">StandardSpecItem</span></code> - a standard CLI argument (non-positional)</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">OptionalSpecItem</span></code> - an optional argument</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">BoolSpecItem</span></code> - a boolean flag such as <code class="docutils literal notranslate"><span class="pre">--debug</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ListSpecItem</span></code> - an argument accepting a list of values</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">PositionalSpecItem</span></code> - a positional CLI argument</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">ListPositionalSpecItem</span></code> - a positional argument that accepts a list</p></li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
+<p>These classifications of arguments are based on the sets of options to argparse that are required to be set to achieve the appropriate typing and related behavior. See the following section for the details of how these options are set.</p>
+<section id="programmer-customization">
+<h4>2.2.1 Programmer customization<a class="headerlink" href="#programmer-customization" title="Link to this heading">¶</a></h4>
+<p>The programmer can specify the type of the field in the <code class="docutils literal notranslate"><span class="pre">dataclass</span></code> definition, and can use the <code class="docutils literal notranslate"><span class="pre">default</span></code> and <code class="docutils literal notranslate"><span class="pre">default_factory</span></code> options to control the default value given to argparse. However, to customise any other attributes for an entry, or to set an argument as positional, the <code class="docutils literal notranslate"><span class="pre">dataclasses.field()</span></code> metadata is used.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">dataclasses</span></code> metadata is an untyped dictionary stored on fields, that allows us to store any information we like on a field as well as the built-in values like defaults. <code class="docutils literal notranslate"><span class="pre">cfgclasses</span></code> uses a particular entry in this metadata <code class="docutils literal notranslate"><span class="pre">cfgclasses.CFG_METADATA_FIELD</span></code> to store a <code class="docutils literal notranslate"><span class="pre">ConfigOpts</span></code> or <code class="docutils literal notranslate"><span class="pre">NonPositionalConfigOpts</span></code> instance.</p>
+<dl class="simple">
+<dt>These classes allow the following customization:</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">help</span></code> - the help string for the argument</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">metavar</span></code> - the ‘metavar’ name to display for the argument</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">choices</span></code> - the list of valid choices for the argument</p></li>
+</ul>
+</dd>
+<dt>Additionally, the <code class="docutils literal notranslate"><span class="pre">NonPositionalConfigOpts</span></code> class allows the user to specify:</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">optnames</span></code> - the list of option names for the argument (e.g. <code class="docutils literal notranslate"><span class="pre">[&quot;-d&quot;,</span> <span class="pre">&quot;--debug&quot;]</span></code>)</p></li>
+</ul>
+</dd>
+</dl>
+<p>If there is no entry in a fields metadata for <code class="docutils literal notranslate"><span class="pre">cfgclasses.CFG_METADATA_FIELD</span></code> then the default value of <code class="docutils literal notranslate"><span class="pre">NonPositionalConfigOpts</span></code> is used. If an instance of <code class="docutils literal notranslate"><span class="pre">ConfigOpts</span></code> is found, then the field is treated as a positional argument.</p>
+</section>
+<section id="programmer-argument-helper-functions">
+<h4>2.2.2 Programmer argument helper functions<a class="headerlink" href="#programmer-argument-helper-functions" title="Link to this heading">¶</a></h4>
+<p>Interacting with <code class="docutils literal notranslate"><span class="pre">dataclasses</span></code> and creating instances of <code class="docutils literal notranslate"><span class="pre">ConfigOpts</span></code> is more verbose than necessary in many cases, so <code class="docutils literal notranslate"><span class="pre">cfgclasses</span></code> provides several utilities to improve this.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">arg()</span></code> function has the following interface:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">arg</span><span class="p">(</span>
+    <span class="n">help</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">*</span><span class="n">optnames</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">positional</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">metavar</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">choices</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">default</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">MISSING</span><span class="p">,</span>
+    <span class="n">default_factory</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">Field</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+</pre></div>
+</div>
+<p>These arguments are mapped to the equivalent in either <code class="docutils literal notranslate"><span class="pre">dataclasses.field()</span></code> for default and default_factory, or to the <code class="docutils literal notranslate"><span class="pre">ConfigOpts</span></code> constructor for the other arguments. The <code class="docutils literal notranslate"><span class="pre">positional</span></code> argument is used to determine whether to create a <code class="docutils literal notranslate"><span class="pre">ConfigOpts</span></code> or <code class="docutils literal notranslate"><span class="pre">NonPositionalConfigOpts</span></code> instance, and is <code class="docutils literal notranslate"><span class="pre">positional</span></code> is provided then <code class="docutils literal notranslate"><span class="pre">optnames</span></code> cannot be specified.</p>
+</section>
+</section>
+<section id="populating-the-argumentparser">
+<h3>2.3 Populating the ArgumentParser<a class="headerlink" href="#populating-the-argumentparser" title="Link to this heading">¶</a></h3>
+<p>From the <code class="docutils literal notranslate"><span class="pre">Specification</span></code>, each member <code class="docutils literal notranslate"><span class="pre">SpecificationItem</span></code> is added to the <code class="docutils literal notranslate"><span class="pre">ArgumentParser</span></code> using <code class="docutils literal notranslate"><span class="pre">add_argument()</span></code> and each nested <code class="docutils literal notranslate"><span class="pre">Specification</span></code> is added with <code class="docutils literal notranslate"><span class="pre">add_argument_group()</span></code>, recursively adding its own members and subspecs to this new group.</p>
+<dl class="simple">
+<dt>The <code class="docutils literal notranslate"><span class="pre">ArgOpts</span></code> instance for each <code class="docutils literal notranslate"><span class="pre">SpecificationItem</span></code> contains information on the arguments to be passed to <code class="docutils literal notranslate"><span class="pre">argparse</span></code>. There are some common options which can be set for all arguments, and there are options which are used to control the typing behavior of <code class="docutils literal notranslate"><span class="pre">argparse</span></code> to match the expected output types. The common options are:</dt><dd><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">type</span></code> - the type of the argument that argparse should parse the argument as</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">help</span></code> - the help string for the argument</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">metavar</span></code> - the ‘metavar’ name to display for the argument</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">choices</span></code> - the list of valid choices for the argument</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">default</span></code> - the default value for the argument</p></li>
+</ul>
+</dd>
+</dl>
+<p>Other than <code class="docutils literal notranslate"><span class="pre">type</span></code> all of these are optional and are set by the programmer when defining their <code class="docutils literal notranslate"><span class="pre">dataclass</span></code> fields.
+The additional option <code class="docutils literal notranslate"><span class="pre">dest</span></code> is also commonly used with <code class="docutils literal notranslate"><span class="pre">add_argument</span></code> to set the name of the attribute in the <code class="docutils literal notranslate"><span class="pre">argparse.Namespace</span></code> that the value of the argument should be stored in. This value matches the name of she <code class="docutils literal notranslate"><span class="pre">SpecificationItem</span></code>.</p>
+<dl>
+<dt>The typing considerations are:</dt><dd><ul>
+<li><p>For lists:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">nargs</span></code> is set to <code class="docutils literal notranslate"><span class="pre">&quot;+&quot;</span></code> <a class="footnote-reference brackets" href="#nargs" id="id1" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">type</span></code> is the inner type of the list (e.g. <code class="docutils literal notranslate"><span class="pre">list[int]</span> <span class="pre">-&gt;</span> <span class="pre">int</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">required</span></code> is set to <code class="docutils literal notranslate"><span class="pre">True</span></code> if <code class="docutils literal notranslate"><span class="pre">default</span></code> is not given</p></li>
+</ul>
+</li>
+<li><p>For optional types:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">type</span></code> is the inner type of the optional (e.g. <code class="docutils literal notranslate"><span class="pre">Optional[int]</span> <span class="pre">-&gt;</span> <span class="pre">int</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">required</span></code> is set to <code class="docutils literal notranslate"><span class="pre">False</span></code></p></li>
+</ul>
+</li>
+<li><p>For booleans</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">action</span></code> - the action to be taken when the argument is parsed</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">type</span></code> - is not given</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">required</span></code> is not given</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">action</span></code> is set to <code class="docutils literal notranslate"><span class="pre">store_true</span></code> unless <code class="docutils literal notranslate"><span class="pre">default</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code> in which case the value used is <code class="docutils literal notranslate"><span class="pre">store_false</span></code> <a class="footnote-reference brackets" href="#action" id="id2" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a></p>
+</li>
+<li><p>For all other types</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">type</span></code> is the type of the argument</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">required</span></code> is set to <code class="docutils literal notranslate"><span class="pre">True</span></code> if <code class="docutils literal notranslate"><span class="pre">default</span></code> is not given</p></li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="nargs" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id1">1</a><span class="fn-bracket">]</span></span>
+<p>other values of <code class="docutils literal notranslate"><span class="pre">nargs</span></code> are not supported as they are not known to be necessary configuration focussed view of the CLI.</p>
+</aside>
+<aside class="footnote brackets" id="action" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id2">2</a><span class="fn-bracket">]</span></span>
+<p>because of the naming of variables it is recommended not to True as a default value, or to override the option names to negate the flag the user must pass. E.g. <code class="docutils literal notranslate"><span class="pre">--no-debug</span></code> for a variable <code class="docutils literal notranslate"><span class="pre">debug:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">arg(&quot;Turn</span> <span class="pre">off</span> <span class="pre">debug&quot;,</span> <span class="pre">&quot;--no-debug&quot;,</span> <span class="pre">default=True)</span></code>. Even in this example, the mis-match between the help message and the value of the variable is confusing.</p>
+</aside>
+</aside>
+<section id="positional-options">
+<h4>2.3.1 Positional options<a class="headerlink" href="#positional-options" title="Link to this heading">¶</a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">cfgclasses</span></code> allows the programmer to specify that any argument is positional, allowing the cli to appear as:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>tool.py<span class="w"> </span>positional_arg
+</pre></div>
+</div>
+<p>instead of:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>tool.py<span class="w"> </span>--positional_arg<span class="w"> </span>positional_arg
+</pre></div>
+</div>
+<p>However, this is only possible for regular and <code class="docutils literal notranslate"><span class="pre">list</span></code> types, not for <code class="docutils literal notranslate"><span class="pre">Optional</span></code> types or booleans. This is because there is no way for a user to specify the <code class="docutils literal notranslate"><span class="pre">None</span></code> value to a positional argument for <code class="docutils literal notranslate"><span class="pre">Optional</span></code> and argparse does not correctly parse <code class="docutils literal notranslate"><span class="pre">True</span></code> or <code class="docutils literal notranslate"><span class="pre">False</span></code> strings into booleans. Furthermore, a positional boolean argument is not very useful as a boolean flag is more descriptive with <code class="docutils literal notranslate"><span class="pre">--</span></code>, e.g. <code class="docutils literal notranslate"><span class="pre">tool.py</span> <span class="pre">--debug</span></code> rather than the more mysterious <code class="docutils literal notranslate"><span class="pre">tool.py</span> <span class="pre">True</span></code>.</p>
+<p>Finally, <code class="docutils literal notranslate"><span class="pre">required</span></code> cannot be specified for any positional argument created for argparse.</p>
+</section>
+</section>
+<section id="creating-the-dataclass-instance-from-the-argparse-namespace">
+<h3>2.4 Creating the <code class="docutils literal notranslate"><span class="pre">dataclass</span></code> instance from the <code class="docutils literal notranslate"><span class="pre">argparse.Namespace</span></code><a class="headerlink" href="#creating-the-dataclass-instance-from-the-argparse-namespace" title="Link to this heading">¶</a></h3>
+<p>Once the <code class="docutils literal notranslate"><span class="pre">argparse.Namespace</span></code> has been produced it will contain attributes for all the <code class="docutils literal notranslate"><span class="pre">SpecificationItem</span></code> instances in the <code class="docutils literal notranslate"><span class="pre">Specification</span></code> and its nested subspecs. The attribute names will have been set using the <code class="docutils literal notranslate"><span class="pre">dest</span></code> option to <code class="docutils literal notranslate"><span class="pre">add_argument()</span></code> to match the name attribute of the <code class="docutils literal notranslate"><span class="pre">SpecificationItem</span></code>. The values of these attributes will have appropriate types such that they can be directly assigned to the corresponding field in the <code class="docutils literal notranslate"><span class="pre">dataclass</span></code> definition.</p>
+<p>As such, the <code class="docutils literal notranslate"><span class="pre">dataclass</span></code> can be instantiated by iterating over the <code class="docutils literal notranslate"><span class="pre">SpecificationItem</span></code> instances and assigning the value of the corresponding attribute in the <code class="docutils literal notranslate"><span class="pre">argparse.Namespace</span></code> to the field in the <code class="docutils literal notranslate"><span class="pre">dataclass</span></code>. For nested configuration, we simply need to perform this operation depth-first so that we build the nested configuration instances and assign them to the correct fields in the parent configuration instance.</p>
+</section>
+<section id="id3">
+<h3>2.5 Summary<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>The <code class="docutils literal notranslate"><span class="pre">parse_args()</span></code> method of the <code class="docutils literal notranslate"><span class="pre">cfgclasses</span></code> module performs the following steps:</dt><dd><ul class="simple">
+<li><p>Creates a <code class="docutils literal notranslate"><span class="pre">Specification</span></code> instance from the <code class="docutils literal notranslate"><span class="pre">dataclass</span></code> definition</p></li>
+<li><p>Builds an <code class="docutils literal notranslate"><span class="pre">argparse.ArgumentParser</span></code> instance from the <code class="docutils literal notranslate"><span class="pre">Specification</span></code> instance</p></li>
+<li><p>Parses the CLI arguments using this <code class="docutils literal notranslate"><span class="pre">argparse.ArgumentParser</span></code></p></li>
+<li><p>Reads from the <code class="docutils literal notranslate"><span class="pre">argparse.Namespace</span></code> output to create an instance of the programmers <code class="docutils literal notranslate"><span class="pre">dataclass</span></code></p></li>
+</ul>
+</dd>
+</dl>
+<p>The bulk of the complexity is in the creation of the <code class="docutils literal notranslate"><span class="pre">SpecificationItem</span></code> instances as there is a combination of logic based on the type of the fields and the users options for the field to be processed.</p>
+</section>
+</section>
+<section id="additional-feature-designs">
+<h2>Additional Feature Designs<a class="headerlink" href="#additional-feature-designs" title="Link to this heading">¶</a></h2>
+<p>There are additional features of the module that have their own design pages as listed below. These pages are expansions on this original design that build upon the core principles and design aspects covered here.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="designs/mutually_exclusive_groups.html">Mutually Exclusive Groups</a></li>
+<li class="toctree-l1"><a class="reference internal" href="designs/submodes.html">Submodes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="designs/transforms.html">Transforms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="designs/validators.html">Validators</a></li>
+</ul>
+</div>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Design</a><ul>
+<li><a class="reference internal" href="#problem-definition">1. Problem Definition</a><ul>
+<li><a class="reference internal" href="#inspiration-dataclasses">1.1 Inspiration - <code class="docutils literal notranslate"><span class="pre">dataclasses</span></code></a></li>
+<li><a class="reference internal" href="#summary">1.2 Summary</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#design-overview">2. Design Overview</a><ul>
+<li><a class="reference internal" href="#high-level-flow">2.1 High-level flow</a></li>
+<li><a class="reference internal" href="#building-the-specification">2.2. Building the specification</a><ul>
+<li><a class="reference internal" href="#programmer-customization">2.2.1 Programmer customization</a></li>
+<li><a class="reference internal" href="#programmer-argument-helper-functions">2.2.2 Programmer argument helper functions</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#populating-the-argumentparser">2.3 Populating the ArgumentParser</a><ul>
+<li><a class="reference internal" href="#positional-options">2.3.1 Positional options</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#creating-the-dataclass-instance-from-the-argparse-namespace">2.4 Creating the <code class="docutils literal notranslate"><span class="pre">dataclass</span></code> instance from the <code class="docutils literal notranslate"><span class="pre">argparse.Namespace</span></code></a></li>
+<li><a class="reference internal" href="#id3">2.5 Summary</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#additional-feature-designs">Additional Feature Designs</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="api.html"
+                          title="previous chapter">API</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="designs/mutually_exclusive_groups.html"
+                          title="next chapter">Mutually Exclusive Groups</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/design.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="designs/mutually_exclusive_groups.html" title="Mutually Exclusive Groups"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="api.html" title="API"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">cfgclasses 2.3.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Design</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2023, Olli Johnson.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

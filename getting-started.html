@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Getting Started &#8212; cfgclasses 2.3.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="_static/documentation_options.js?v=c3c8ae58"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API" href="api.html" />
+    <link rel="prev" title="Config Classes (cfgclasses)" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="api.html" title="API"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Config Classes (cfgclasses)"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">cfgclasses 2.3.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Getting Started</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="getting-started">
+<h1>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">¶</a></h1>
+<p>This page will guide you through getting started with a simple python
+application using cfgclasses to define the command line interface.
+For more details on the features of cfgclasses, see the <a class="reference internal" href="api.html"><span class="doc">API</span></a> documentation.</p>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
+<p>Install using pip:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>cfgclasses
+</pre></div>
+</div>
+<p>We recommend using the latest available version of python, cfgclasses supports
+python 3.10 and above.</p>
+</section>
+<section id="a-simple-application">
+<h2>A simple application<a class="headerlink" href="#a-simple-application" title="Link to this heading">¶</a></h2>
+<p>A simple python application using cfgclasses looks like this:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cfgclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">arg</span><span class="p">,</span> <span class="n">parse_args</span>
+
+<span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A simple example application&quot;&quot;&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="s2">&quot;Your name&quot;</span><span class="p">)</span>
+    <span class="n">num</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="s2">&quot;An integer option&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">parse_args</span><span class="p">(</span><span class="n">MyConfig</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Hello, </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">! Your number was: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">num</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>And an example run of this application:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>python<span class="w"> </span>example.py<span class="w"> </span>--help
+usage:<span class="w"> </span>example.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>--name<span class="w"> </span>NAME<span class="o">]</span><span class="w"> </span><span class="o">[</span>--num<span class="w"> </span>NUM<span class="o">]</span>
+
+options:
+<span class="w">  </span>-h,<span class="w"> </span>--help<span class="w">   </span>show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span>
+
+<span class="w">  </span>--name<span class="w"> </span>NAME<span class="w">  </span>Your<span class="w"> </span>name
+<span class="w">  </span>--num<span class="w"> </span>NUM<span class="w">    </span>An<span class="w"> </span>integer<span class="w"> </span>option
+
+$<span class="w"> </span>python<span class="w"> </span>example.py<span class="w"> </span>--name<span class="w"> </span>Olli<span class="w"> </span>--num<span class="w"> </span><span class="m">42</span>
+Hello,<span class="w"> </span>Olli!<span class="w"> </span>Your<span class="w"> </span>number<span class="w"> </span>was:<span class="w"> </span><span class="m">42</span>
+</pre></div>
+</div>
+</section>
+<section id="common-patterns">
+<h2>Common patterns<a class="headerlink" href="#common-patterns" title="Link to this heading">¶</a></h2>
+<p>cfgclasses comes with utilty methods to reduce the volume of code required to define an applications interface. The most common of these has already been seen in the example above: <code class="docutils literal notranslate"><span class="pre">arg(helpstr)</span></code>.</p>
+<dl class="py function">
+<dt class="sig sig-object py">
+<span class="sig-prename descclassname"><span class="pre">cfgclasses.</span></span><span class="sig-name descname"><span class="pre">arg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">helpstr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*optnames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positional=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metavar=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">choices=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default=&lt;dataclasses._MISSING_TYPE</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_factory=&lt;dataclasses._MISSING_TYPE</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_type=None</span></span></em><span class="sig-paren">)</span></dt>
+<dd><p>Create a dataclass field with additional cfgclasses options stored.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>helpstr</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Help string for this fields argument.</p></li>
+<li><p><strong>optnames</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Optional list of option names for this fields argument.
+E.g. <code class="docutils literal notranslate"><span class="pre">[&quot;-v&quot;,</span> <span class="pre">&quot;--verbose&quot;]</span></code>.</p></li>
+<li><p><strong>positional</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If true, use a positional argument for this field. Cannot
+be used with <code class="docutils literal notranslate"><span class="pre">optnames</span></code>.</p></li>
+<li><p><strong>metavar</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Metavar to display alongside the argument for the field.</p></li>
+<li><p><strong>choices</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – List of valid choices for the value of this field.</p></li>
+<li><p><strong>default</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>) – Default value for the field if not given on the CLI.</p></li>
+<li><p><strong>default_factory</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>) – Default factory to construct an instance of the
+field if not given on the CLI.</p></li>
+<li><p><strong>transform</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – Function to transform the value of the field after parsing
+from the CLI.</p></li>
+<li><p><strong>transform_type</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – Input type for the transform function. I.e. the type
+read from the CLI.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The resulting dataclass field.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p>The other common pattern is to use <code class="docutils literal notranslate"><span class="pre">optional(helpstr)</span></code> which is the same as <code class="docutils literal notranslate"><span class="pre">arg(helpstr,</span> <span class="pre">default=None)</span></code>. This is useful for defining optional arguments that can be passed to the application.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cfgclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">arg</span><span class="p">,</span> <span class="n">optional</span><span class="p">,</span> <span class="n">parse_args</span>
+
+<span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A simple example application&quot;&quot;&quot;</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="s2">&quot;Your name&quot;</span><span class="p">)</span>
+    <span class="n">num</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">optional</span><span class="p">(</span><span class="s2">&quot;An optional integer option&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">parse_args</span><span class="p">(</span><span class="n">MyConfig</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Hello, </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">!&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">num</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Your number was: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">num</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="boolean-flags">
+<h3>Boolean flags<a class="headerlink" href="#boolean-flags" title="Link to this heading">¶</a></h3>
+<p>Boolean config attributes result in a flag which takes no value and defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>. This is the equivalent of the <code class="docutils literal notranslate"><span class="pre">store_true</span></code> action in argparse.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cfgclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">arg</span><span class="p">,</span> <span class="n">parse_args</span>
+
+<span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;An example application with debug mode&quot;&quot;&quot;</span>
+    <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">parse_args</span><span class="p">(</span><span class="n">MyConfig</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+    <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Debug mode enabled&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Hello, world!&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>python<span class="w"> </span>example.py<span class="w"> </span>--help
+usage:<span class="w"> </span>example.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>--debug<span class="o">]</span>
+
+options:
+<span class="w">  </span>-h,<span class="w"> </span>--help<span class="w">   </span>show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span>
+
+<span class="w">  </span>--debug
+
+$<span class="w"> </span>python<span class="w"> </span>example.py
+Hello,<span class="w"> </span>world!
+
+$<span class="w"> </span>python<span class="w"> </span>example.py<span class="w"> </span>--debug
+Debug<span class="w"> </span>mode<span class="w"> </span>enabled
+Hello,<span class="w"> </span>world!
+</pre></div>
+</div>
+</section>
+<section id="arguments-with-choices">
+<h3>Arguments with choices<a class="headerlink" href="#arguments-with-choices" title="Link to this heading">¶</a></h3>
+<p>Arguments can be restricted to a set of choices using the <code class="docutils literal notranslate"><span class="pre">choices</span></code> argument to <code class="docutils literal notranslate"><span class="pre">arg</span></code>. This is the recommended way of interacting with enumerated types in python and for indexing into dictionaries.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cfgclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">arg</span><span class="p">,</span> <span class="n">parse_args</span>
+
+<span class="n">COLOURS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;red&quot;</span><span class="p">:</span> <span class="s2">&quot;#ff0000&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;green&quot;</span><span class="p">:</span> <span class="s2">&quot;#00ff00&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;blue&quot;</span><span class="p">:</span> <span class="s2">&quot;#0000ff&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;An example application with debug mode&quot;&quot;&quot;</span>
+    <span class="n">colour</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="s2">&quot;Your favourite colour&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">COLOURS</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">parse_args</span><span class="p">(</span><span class="n">MyConfig</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Your favourite colour is </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">colour</span><span class="si">}</span><span class="s2"> which is </span><span class="si">{</span><span class="n">COLOURS</span><span class="p">[</span><span class="n">config</span><span class="o">.</span><span class="n">colour</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>python<span class="w"> </span>example.py<span class="w"> </span>--help
+usage:<span class="w"> </span>example.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span>--colour<span class="w"> </span><span class="o">{</span>red,green,blue<span class="o">}</span>
+
+options:
+<span class="w">  </span>-h,<span class="w"> </span>--help<span class="w">            </span>show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span>
+
+<span class="w">  </span>--colour<span class="w"> </span><span class="o">{</span>red,green,blue<span class="o">}</span>
+<span class="w">                        </span>Your<span class="w"> </span>favourite<span class="w"> </span>colour
+
+$<span class="w"> </span>python<span class="w"> </span>example.py<span class="w"> </span>--colour<span class="w"> </span>red
+Your<span class="w"> </span>favourite<span class="w"> </span>colour<span class="w"> </span>is<span class="w"> </span>red<span class="w"> </span>which<span class="w"> </span>is<span class="w"> </span><span class="c1">#ff0000</span>
+
+$<span class="w"> </span>python<span class="w"> </span>example.py<span class="w"> </span>--colour<span class="w"> </span>orange
+usage:<span class="w"> </span>example.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span>--colour<span class="w"> </span><span class="o">{</span>red,green,blue<span class="o">}</span>
+example.py:<span class="w"> </span>error:<span class="w"> </span>argument<span class="w"> </span>--colour:<span class="w"> </span>invalid<span class="w"> </span>choice:<span class="w"> </span><span class="s1">&#39;orange&#39;</span><span class="w"> </span><span class="o">(</span>choose<span class="w"> </span>from<span class="w"> </span><span class="s1">&#39;red&#39;</span>,<span class="w"> </span><span class="s1">&#39;green&#39;</span>,<span class="w"> </span><span class="s1">&#39;blue&#39;</span><span class="o">)</span>
+</pre></div>
+</div>
+</section>
+<section id="empty-lists">
+<h3>Empty lists<a class="headerlink" href="#empty-lists" title="Link to this heading">¶</a></h3>
+<p>A configuration item that accepts a list of values will normally require at least one value to be passed. This can be avoided by using the <code class="docutils literal notranslate"><span class="pre">default_factory</span></code> argument to <code class="docutils literal notranslate"><span class="pre">arg()</span></code> to specify a factory function that returns an empty list. This use of <code class="docutils literal notranslate"><span class="pre">default_factory</span></code> is equivalent to <code class="docutils literal notranslate"><span class="pre">default=[]</span></code>, except that it avoids re-use of the same list object across multiple instances of the class.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cfgclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">arg</span><span class="p">,</span> <span class="n">parse_args</span>
+
+<span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MyConfig</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;An example application with debug mode&quot;&quot;&quot;</span>
+    <span class="n">required</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="s2">&quot;A required list of strings&quot;</span><span class="p">)</span>
+    <span class="n">optional</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="s2">&quot;An optional list of strings&quot;</span><span class="p">,</span> <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">parse_args</span><span class="p">(</span><span class="n">MyConfig</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Required: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">required</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Optional: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">optional</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>python<span class="w"> </span>example.py<span class="w"> </span>--help
+usage:<span class="w"> </span>foo.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span>--required<span class="w"> </span>REQUIRED<span class="w"> </span><span class="o">[</span>REQUIRED<span class="w"> </span>...<span class="o">]</span><span class="w"> </span><span class="o">[</span>--optional<span class="w"> </span>OPTIONAL<span class="w"> </span><span class="o">[</span>OPTIONAL<span class="w"> </span>...<span class="o">]]</span>
+
+options:
+<span class="w">  </span>-h,<span class="w"> </span>--help<span class="w">            </span>show<span class="w"> </span>this<span class="w"> </span><span class="nb">help</span><span class="w"> </span>message<span class="w"> </span>and<span class="w"> </span><span class="nb">exit</span>
+
+<span class="w">  </span>--required<span class="w"> </span>REQUIRED<span class="w"> </span><span class="o">[</span>REQUIRED<span class="w"> </span>...<span class="o">]</span>
+<span class="w">                        </span>A<span class="w"> </span>required<span class="w"> </span>list<span class="w"> </span>of<span class="w"> </span>strings
+<span class="w">  </span>--optional<span class="w"> </span>OPTIONAL<span class="w"> </span><span class="o">[</span>OPTIONAL<span class="w"> </span>...<span class="o">]</span>
+<span class="w">                        </span>An<span class="w"> </span>optional<span class="w"> </span>list<span class="w"> </span>of<span class="w"> </span>strings
+
+$<span class="w"> </span>python<span class="w"> </span>example.py<span class="w"> </span>--required<span class="w"> </span>A<span class="w"> </span>B<span class="w"> </span>C
+Required:<span class="w"> </span><span class="o">[</span><span class="s1">&#39;A&#39;</span>,<span class="w"> </span><span class="s1">&#39;B&#39;</span>,<span class="w"> </span><span class="s1">&#39;C&#39;</span><span class="o">]</span>
+Optional:<span class="w"> </span><span class="o">[]</span>
+
+$<span class="w"> </span>python<span class="w"> </span>example.py<span class="w"> </span>--required<span class="w"> </span>A<span class="w"> </span>--optional<span class="w"> </span>B<span class="w"> </span>C
+Required:<span class="w"> </span><span class="o">[</span><span class="s1">&#39;A&#39;</span><span class="o">]</span>
+Optional:<span class="w"> </span><span class="o">[</span><span class="s1">&#39;B&#39;</span>,<span class="w"> </span><span class="s1">&#39;C&#39;</span><span class="o">]</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Getting Started</a><ul>
+<li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#a-simple-application">A simple application</a></li>
+<li><a class="reference internal" href="#common-patterns">Common patterns</a><ul>
+<li><a class="reference internal" href="#boolean-flags">Boolean flags</a></li>
+<li><a class="reference internal" href="#arguments-with-choices">Arguments with choices</a></li>
+<li><a class="reference internal" href="#empty-lists">Empty lists</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="index.html"
+                          title="previous chapter">Config Classes (cfgclasses)</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="api.html"
+                          title="next chapter">API</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/getting-started.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="api.html" title="API"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Config Classes (cfgclasses)"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">cfgclasses 2.3.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Getting Started</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2023, Olli Johnson.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

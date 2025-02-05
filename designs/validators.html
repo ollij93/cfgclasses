@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Validators &#8212; cfgclasses 2.3.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../_static/documentation_options.js?v=c3c8ae58"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Contributing" href="../contribution.html" />
+    <link rel="prev" title="Transforms" href="transforms.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../contribution.html" title="Contributing"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="transforms.html" title="Transforms"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">cfgclasses 2.3.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../design.html" accesskey="U">Design</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Validators</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="validators">
+<h1>Validators<a class="headerlink" href="#validators" title="Link to this heading">¶</a></h1>
+<section id="feature-overview">
+<h2>1. Feature overview<a class="headerlink" href="#feature-overview" title="Link to this heading">¶</a></h2>
+<p>The validators feature allows the programmer to define a validation function that runs after the dataclass is initialized from CLI arguments. The validation functions can raise ValueError’s in cases of invalid configuration being specified which result in calls to <code class="docutils literal notranslate"><span class="pre">argparse.ArgumentParser.error()</span></code> result in nicely formatted errors for the user including the tools usage message and a non-zero exit code.</p>
+<p>An example of the validators feature is shown below:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># price-checker.py</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cfgclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">arg</span><span class="p">,</span> <span class="n">parse_args</span><span class="p">,</span> <span class="n">validator</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+
+<span class="n">ITEMS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;shirt&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;red&quot;</span><span class="p">:</span> <span class="mf">10.45</span><span class="p">,</span>
+        <span class="s2">&quot;green&quot;</span><span class="p">:</span> <span class="mf">11.45</span><span class="p">,</span>
+        <span class="s2">&quot;orange&quot;</span><span class="p">:</span> <span class="mf">12.60</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;socks&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;blue&quot;</span><span class="p">:</span> <span class="mf">5.10</span><span class="p">,</span>
+        <span class="s2">&quot;green&quot;</span><span class="p">:</span> <span class="mf">5.10</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
+    <span class="n">item</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="s2">&quot;Item to check the price for&quot;</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">ITEMS</span><span class="p">)</span>
+    <span class="c1"># Note: we can&#39;t specify the choices for colour here because it depends</span>
+    <span class="c1"># on the item</span>
+    <span class="n">colour</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="s2">&quot;Colour of the item&quot;</span><span class="p">)</span>
+
+    <span class="nd">@validator</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_available_color</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">colour</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ITEMS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">item</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">item</span><span class="si">}</span><span class="s2"> is not available in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">colour</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;£</span><span class="si">{</span><span class="n">ITEMS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">item</span><span class="p">][</span><span class="bp">self</span><span class="o">.</span><span class="n">colour</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+    <span class="n">parse_args</span><span class="p">(</span><span class="n">Config</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Example runs:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>python3<span class="w"> </span>foo.py<span class="w"> </span>--item<span class="w"> </span>shirt<span class="w"> </span>--colour<span class="w"> </span>red
+£10.45
+
+$<span class="w"> </span>price-checker.py<span class="w"> </span>--item<span class="w"> </span>shirt<span class="w"> </span>--colour<span class="w"> </span>blue
+usage:<span class="w"> </span>foo.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span>--item<span class="w"> </span><span class="o">{</span>shirt,socks<span class="o">}</span><span class="w"> </span>--colour<span class="w"> </span>COLOUR
+foo.py:<span class="w"> </span>error:<span class="w"> </span>shirt<span class="w"> </span>is<span class="w"> </span>not<span class="w"> </span>available<span class="w"> </span><span class="k">in</span><span class="w"> </span>blue
+</pre></div>
+</div>
+</section>
+<section id="design-ammendments">
+<h2>2. Design ammendments<a class="headerlink" href="#design-ammendments" title="Link to this heading">¶</a></h2>
+<dl class="simple">
+<dt>The following additions are made to the primary design:</dt><dd><ul class="simple">
+<li><p>A new <code class="docutils literal notranslate"><span class="pre">&#64;validator</span></code> decorator is added to the <code class="docutils literal notranslate"><span class="pre">cfgclasses</span></code> module which accepts a single argument, the validation function.
+* The decorator sets a marker attribute on the validation function to indicate that it is a cfgclasses validator.</p></li>
+<li><p>A new step is added to the high-level flow after creating the <code class="docutils literal notranslate"><span class="pre">dataclass</span></code> instance:
+* Check all attributes of the instance (exclusing those starting <code class="docutils literal notranslate"><span class="pre">__</span></code>)
+* If the attribute has a marker attribute indicating it is a validator, call the attribute.
+* Repeat this process for all nested <code class="docutils literal notranslate"><span class="pre">dataclass</span></code> instances.
+* If any ValueError’s are raised by these methods, use the <code class="docutils literal notranslate"><span class="pre">argparse.ArgumentParser.error()</span></code> method to output the exception message.</p></li>
+</ul>
+</dd>
+</dl>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Validators</a><ul>
+<li><a class="reference internal" href="#feature-overview">1. Feature overview</a></li>
+<li><a class="reference internal" href="#design-ammendments">2. Design ammendments</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="transforms.html"
+                          title="previous chapter">Transforms</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="../contribution.html"
+                          title="next chapter">Contributing</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/designs/validators.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../contribution.html" title="Contributing"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="transforms.html" title="Transforms"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">cfgclasses 2.3.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../design.html" >Design</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Validators</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2023, Olli Johnson.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>API &#8212; cfgclasses 2.3.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="_static/documentation_options.js?v=c3c8ae58"></script>
+    <script src="_static/doctools.js?v=9bcbadda"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Design" href="design.html" />
+    <link rel="prev" title="Getting Started" href="getting-started.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="design.html" title="Design"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="getting-started.html" title="Getting Started"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">cfgclasses 2.3.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">API</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="api">
+<h1>API<a class="headerlink" href="#api" title="Link to this heading">¶</a></h1>
+<p>This page documents the API for the cfgclasses package, the high-level
+structures such as the <code class="docutils literal notranslate"><span class="pre">parse_args()</span></code> entry point as well as the provided helper
+functions such as <code class="docutils literal notranslate"><span class="pre">arg()</span></code>.</p>
+</section>
+<section id="module-cfgclasses">
+<span id="cfgclasses"></span><h1>cfgclasses<a class="headerlink" href="#module-cfgclasses" title="Link to this heading">¶</a></h1>
+<p>cfgclasses are representations of a python tools CLI configuration options
+built on <a class="reference external" href="https://docs.python.org/3/library/dataclasses.html">dataclasses</a>. This
+allows individual tools to focus on specifying their configuration structure
+without the overhead of interacting with argparse and the typeless Namespace it
+returns.</p>
+<p>The primary entrypoint for this module is the <code class="docutils literal notranslate"><span class="pre">parse_args()</span></code> function.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="cfgclasses.parse_args">
+<span class="sig-prename descclassname"><span class="pre">cfgclasses.</span></span><span class="sig-name descname"><span class="pre">parse_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">argv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prog</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cfgclasses.parse_args" title="Link to this definition">¶</a></dt>
+<dd><p>Parse the arguments vector into an instance of the given class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cls</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">_T</span></code>)]) – The class to parse the arguments into.</p></li>
+<li><p><strong>argv</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – The arguments vector to parse.</p></li>
+<li><p><strong>prog</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – The name of the program to display in the help message.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">cls</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An instance of the given class with the parsed arguments.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cfgclasses.parse_args_with_submodes">
+<span class="sig-prename descclassname"><span class="pre">cfgclasses.</span></span><span class="sig-name descname"><span class="pre">parse_args_with_submodes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">argv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">submodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prog</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cfgclasses.parse_args_with_submodes" title="Link to this definition">¶</a></dt>
+<dd><p>Parse the arguments vector into an instance of this class and a submode.</p>
+<p>The submode will be one of the provided submodes classes populated with
+the CLI arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cls</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">_T</span></code>)]) – The class to parse the arguments into.</p></li>
+<li><p><strong>argv</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – The arguments vector to parse.</p></li>
+<li><p><strong>submodes</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">_U</span></code>)]]) – Mapping of submode name to submode classes to parse.</p></li>
+<li><p><strong>prog</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – The name of the program to display in the help message.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">tuple[cls,</span> <span class="pre">submode]</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A tuple of the top-level config and the submode config.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If no submodes are provided.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p>Alternative forms that allow for the parsing of unknown arguments are also provided.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="cfgclasses.parse_known_args">
+<span class="sig-prename descclassname"><span class="pre">cfgclasses.</span></span><span class="sig-name descname"><span class="pre">parse_known_args</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">argv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prog</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cfgclasses.parse_known_args" title="Link to this definition">¶</a></dt>
+<dd><p>Parse the known arguments from the input vector into an instance of the given class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cls</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">_T</span></code>)]) – The class to parse the arguments into.</p></li>
+<li><p><strong>argv</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – The arguments vector to parse.</p></li>
+<li><p><strong>prog</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – The name of the program to display in the help message.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">tuple[cls,</span> <span class="pre">list[str]]</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An instance of the given class with the parsed arguments, plus a
+list of unknown arguments.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cfgclasses.parse_known_args_with_submodes">
+<span class="sig-prename descclassname"><span class="pre">cfgclasses.</span></span><span class="sig-name descname"><span class="pre">parse_known_args_with_submodes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">argv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">submodes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prog</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cfgclasses.parse_known_args_with_submodes" title="Link to this definition">¶</a></dt>
+<dd><p>Parse the known arguments from the input vector into an instance of this class and a submode.</p>
+<p>The submode will be one of the provided submodes classes populated with
+the CLI arguments.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cls</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">_T</span></code>)]) – The class to parse the arguments into.</p></li>
+<li><p><strong>argv</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Sequence</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – The arguments vector to parse.</p></li>
+<li><p><strong>submodes</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">_U</span></code>)]]) – Mapping of submode name to submode classes to parse.</p></li>
+<li><p><strong>prog</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – The name of the program to display in the help message.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">tuple[cls,</span> <span class="pre">submode,</span> <span class="pre">list[str]]</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A tuple of the top-level config, the submode config and a list of
+unknown arguments.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If no submodes are provided.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p>Additionally the following functions are provided to simplify the creation of
+the class fields.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="cfgclasses.arg">
+<span class="sig-prename descclassname"><span class="pre">cfgclasses.</span></span><span class="sig-name descname"><span class="pre">arg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">helpstr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*optnames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positional=False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metavar=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">choices=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default=&lt;dataclasses._MISSING_TYPE</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_factory=&lt;dataclasses._MISSING_TYPE</span> <span class="pre">object&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_type=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cfgclasses.arg" title="Link to this definition">¶</a></dt>
+<dd><p>Create a dataclass field with additional cfgclasses options stored.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>helpstr</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Help string for this fields argument.</p></li>
+<li><p><strong>optnames</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Optional list of option names for this fields argument.
+E.g. <code class="docutils literal notranslate"><span class="pre">[&quot;-v&quot;,</span> <span class="pre">&quot;--verbose&quot;]</span></code>.</p></li>
+<li><p><strong>positional</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If true, use a positional argument for this field. Cannot
+be used with <code class="docutils literal notranslate"><span class="pre">optnames</span></code>.</p></li>
+<li><p><strong>metavar</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Metavar to display alongside the argument for the field.</p></li>
+<li><p><strong>choices</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – List of valid choices for the value of this field.</p></li>
+<li><p><strong>default</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>) – Default value for the field if not given on the CLI.</p></li>
+<li><p><strong>default_factory</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>) – Default factory to construct an instance of the
+field if not given on the CLI.</p></li>
+<li><p><strong>transform</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – Function to transform the value of the field after parsing
+from the CLI.</p></li>
+<li><p><strong>transform_type</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – Input type for the transform function. I.e. the type
+read from the CLI.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The resulting dataclass field.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cfgclasses.optional">
+<span class="sig-prename descclassname"><span class="pre">cfgclasses.</span></span><span class="sig-name descname"><span class="pre">optional</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">helpstr</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">optnames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">positional</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metavar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">choices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cfgclasses.optional" title="Link to this definition">¶</a></dt>
+<dd><p>Create a field with cfgclasses options with a default of None.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>helpstr</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Help string for this fields argument.</p></li>
+<li><p><strong>optnames</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – Optional list of option names for this fields argument.
+E.g. <code class="docutils literal notranslate"><span class="pre">[&quot;-v&quot;,</span> <span class="pre">&quot;--verbose&quot;]</span></code>.</p></li>
+<li><p><strong>positional</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – If true, use a positional argument for this field. Cannot
+be used with <code class="docutils literal notranslate"><span class="pre">optnames</span></code>.</p></li>
+<li><p><strong>metavar</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – Metavar to display alongside the argument for the field.</p></li>
+<li><p><strong>choices</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – List of valid choices for the value of this field.</p></li>
+<li><p><strong>transform</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>], <code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – Function to transform the value of the field after parsing
+from the CLI.</p></li>
+<li><p><strong>transform_type</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code>]]) – Input type for the transform function. I.e. the type
+read from the CLI.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The resulting dataclass field.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p>At a lower level these functions instantiate these classes and add them to the
+<code class="docutils literal notranslate"><span class="pre">dataclasses.field()</span></code> metadata in the key <code class="docutils literal notranslate"><span class="pre">cfgclasses.CFG_METADATA_FIELD</span></code>.</p>
+<dl class="py data">
+<dt class="sig sig-object py" id="cfgclasses.argspec.CFG_METADATA_FIELD">
+<span class="sig-prename descclassname"><span class="pre">cfgclasses.argspec.</span></span><span class="sig-name descname"><span class="pre">CFG_METADATA_FIELD</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">'cfgclasses.configopts'</span></em><a class="headerlink" href="#cfgclasses.argspec.CFG_METADATA_FIELD" title="Link to this definition">¶</a></dt>
+<dd><p>Key in the dataclasses field metadata to store the ConfigOpts in.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cfgclasses.ConfigOpts">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cfgclasses.</span></span><span class="sig-name descname"><span class="pre">ConfigOpts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">help=''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metavar=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">choices=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cfgclasses.ConfigOpts" title="Link to this definition">¶</a></dt>
+<dd><p>Data stored in a dataclass field’s metadata for customizing CLI options.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="cfgclasses.NonPositionalConfigOpts">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cfgclasses.</span></span><span class="sig-name descname"><span class="pre">NonPositionalConfigOpts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">help=''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metavar=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">choices=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optnames=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cfgclasses.NonPositionalConfigOpts" title="Link to this definition">¶</a></dt>
+<dd><p>Config options for a non-positional argument.</p>
+</dd></dl>
+
+<p>There are also equivalents for the creation of nested dataclass definitions.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="cfgclasses.cfgtransform">
+<span class="sig-prename descclassname"><span class="pre">cfgclasses.</span></span><span class="sig-name descname"><span class="pre">cfgtransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transform_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cfgclasses.cfgtransform" title="Link to this definition">¶</a></dt>
+<dd><p>Create a field for a nested dataclass with a transform.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>transform_type</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">_T</span></code>)]) – The type that the transform function takes as input.</p></li>
+<li><p><strong>transform</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">_T</span></code>)], <code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">_U</span></code>)]) – The transform function to apply.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">_U</span></code>)</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The resulting dataclass field.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p>Which in turn creates a <a class="reference internal" href="#cfgclasses.ConfigClassTransform" title="cfgclasses.ConfigClassTransform"><code class="xref py py-class docutils literal notranslate"><span class="pre">cfgclasses.ConfigClassTransform</span></code></a> object in the
+key <code class="docutils literal notranslate"><span class="pre">cfgclasses.CFG_METADATA_FIELD</span></code>.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="cfgclasses.ConfigClassTransform">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">cfgclasses.</span></span><span class="sig-name descname"><span class="pre">ConfigClassTransform</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transform</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transform_type</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cfgclasses.ConfigClassTransform" title="Link to this definition">¶</a></dt>
+<dd><p>Data stored in a dataclass field’s metadata for transforming config classes.</p>
+</dd></dl>
+
+<p>There is an additional submodule <a class="reference internal" href="#module-cfgclasses.transforms" title="cfgclasses.transforms"><code class="xref py py-mod docutils literal notranslate"><span class="pre">cfgclasses.transforms</span></code></a> containing several
+common transform functions. See below.</p>
+<p>Finally, the following decorators are provided to allow the creation of
+mutually exclusive groups of options, and adding validation functions to a
+config class definition respectively.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="cfgclasses.mutually_exclusive">
+<span class="sig-prename descclassname"><span class="pre">cfgclasses.</span></span><span class="sig-name descname"><span class="pre">mutually_exclusive</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cls</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cfgclasses.mutually_exclusive" title="Link to this definition">¶</a></dt>
+<dd><p>Decorator to mark a class as representing a mutually exclusive group.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cls</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">_T</span></code>)]) – The class to mark as mutually exclusive.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Type</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">_T</span></code>)]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The modified input class.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cfgclasses.validator">
+<span class="sig-prename descclassname"><span class="pre">cfgclasses.</span></span><span class="sig-name descname"><span class="pre">validator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cfgclasses.validator" title="Link to this definition">¶</a></dt>
+<dd><p>Decorator to mark a function as a validator for a config class.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>func</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">_T</span></code>)], <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]) – The function to mark as a validator.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal notranslate"><span class="pre">TypeVar</span></code>(<code class="docutils literal notranslate"><span class="pre">_T</span></code>)], <code class="xref py py-obj docutils literal notranslate"><span class="pre">None</span></code>]</p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The modified input function.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<section id="module-cfgclasses.transforms">
+<span id="cfgclasses-transforms"></span><h2>cfgclasses.transforms<a class="headerlink" href="#module-cfgclasses.transforms" title="Link to this heading">¶</a></h2>
+<p>Module defining common transform function patterns.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="cfgclasses.transforms.filetext">
+<span class="sig-prename descclassname"><span class="pre">cfgclasses.transforms.</span></span><span class="sig-name descname"><span class="pre">filetext</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cfgclasses.transforms.filetext" title="Link to this definition">¶</a></dt>
+<dd><p>Transform function for loading text file contents.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filepath</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">PurePath</span></code>]) – Path of the file to be loaded.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The contents of the file as a string.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cfgclasses.transforms.filebytes">
+<span class="sig-prename descclassname"><span class="pre">cfgclasses.transforms.</span></span><span class="sig-name descname"><span class="pre">filebytes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cfgclasses.transforms.filebytes" title="Link to this definition">¶</a></dt>
+<dd><p>Transform function for loading binary file contents.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filepath</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">PurePath</span></code>]) – Path of the file to be loaded.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">bytes</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The contents of the file as a byte array.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cfgclasses.transforms.jsonfile">
+<span class="sig-prename descclassname"><span class="pre">cfgclasses.transforms.</span></span><span class="sig-name descname"><span class="pre">jsonfile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cfgclasses.transforms.jsonfile" title="Link to this definition">¶</a></dt>
+<dd><p>Transform function for loading JSON files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filepath</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">PurePath</span></code>]) – Path of the file to be loaded.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The loaded JSON contents of the file.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="cfgclasses.transforms.picklefile">
+<span class="sig-prename descclassname"><span class="pre">cfgclasses.transforms.</span></span><span class="sig-name descname"><span class="pre">picklefile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filepath</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#cfgclasses.transforms.picklefile" title="Link to this definition">¶</a></dt>
+<dd><p>Transform function for loading pickle files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filepath</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">PurePath</span></code>]) – Path of the file to be loaded.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Any</span></code></p>
+</dd>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The loaded pickle content of the file.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">API</a></li>
+<li><a class="reference internal" href="#module-cfgclasses">cfgclasses</a><ul>
+<li><a class="reference internal" href="#cfgclasses.parse_args"><code class="docutils literal notranslate"><span class="pre">parse_args()</span></code></a></li>
+<li><a class="reference internal" href="#cfgclasses.parse_args_with_submodes"><code class="docutils literal notranslate"><span class="pre">parse_args_with_submodes()</span></code></a></li>
+<li><a class="reference internal" href="#cfgclasses.parse_known_args"><code class="docutils literal notranslate"><span class="pre">parse_known_args()</span></code></a></li>
+<li><a class="reference internal" href="#cfgclasses.parse_known_args_with_submodes"><code class="docutils literal notranslate"><span class="pre">parse_known_args_with_submodes()</span></code></a></li>
+<li><a class="reference internal" href="#cfgclasses.arg"><code class="docutils literal notranslate"><span class="pre">arg()</span></code></a></li>
+<li><a class="reference internal" href="#cfgclasses.optional"><code class="docutils literal notranslate"><span class="pre">optional()</span></code></a></li>
+<li><a class="reference internal" href="#cfgclasses.argspec.CFG_METADATA_FIELD"><code class="docutils literal notranslate"><span class="pre">CFG_METADATA_FIELD</span></code></a></li>
+<li><a class="reference internal" href="#cfgclasses.ConfigOpts"><code class="docutils literal notranslate"><span class="pre">ConfigOpts</span></code></a></li>
+<li><a class="reference internal" href="#cfgclasses.NonPositionalConfigOpts"><code class="docutils literal notranslate"><span class="pre">NonPositionalConfigOpts</span></code></a></li>
+<li><a class="reference internal" href="#cfgclasses.cfgtransform"><code class="docutils literal notranslate"><span class="pre">cfgtransform()</span></code></a></li>
+<li><a class="reference internal" href="#cfgclasses.ConfigClassTransform"><code class="docutils literal notranslate"><span class="pre">ConfigClassTransform</span></code></a></li>
+<li><a class="reference internal" href="#cfgclasses.mutually_exclusive"><code class="docutils literal notranslate"><span class="pre">mutually_exclusive()</span></code></a></li>
+<li><a class="reference internal" href="#cfgclasses.validator"><code class="docutils literal notranslate"><span class="pre">validator()</span></code></a></li>
+<li><a class="reference internal" href="#module-cfgclasses.transforms">cfgclasses.transforms</a><ul>
+<li><a class="reference internal" href="#cfgclasses.transforms.filetext"><code class="docutils literal notranslate"><span class="pre">filetext()</span></code></a></li>
+<li><a class="reference internal" href="#cfgclasses.transforms.filebytes"><code class="docutils literal notranslate"><span class="pre">filebytes()</span></code></a></li>
+<li><a class="reference internal" href="#cfgclasses.transforms.jsonfile"><code class="docutils literal notranslate"><span class="pre">jsonfile()</span></code></a></li>
+<li><a class="reference internal" href="#cfgclasses.transforms.picklefile"><code class="docutils literal notranslate"><span class="pre">picklefile()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="getting-started.html"
+                          title="previous chapter">Getting Started</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="design.html"
+                          title="next chapter">Design</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/api.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="design.html" title="Design"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="getting-started.html" title="Getting Started"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">cfgclasses 2.3.0 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">API</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2023, Olli Johnson.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>

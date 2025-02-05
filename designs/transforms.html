@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Transforms &#8212; cfgclasses 2.3.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
+    <link rel="stylesheet" type="text/css" href="../_static/classic.css?v=2bf1fcf8" />
+    
+    <script src="../_static/documentation_options.js?v=c3c8ae58"></script>
+    <script src="../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Validators" href="validators.html" />
+    <link rel="prev" title="Submodes" href="submodes.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="validators.html" title="Validators"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="submodes.html" title="Submodes"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">cfgclasses 2.3.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../design.html" accesskey="U">Design</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Transforms</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="transforms">
+<h1>Transforms<a class="headerlink" href="#transforms" title="Link to this heading">¶</a></h1>
+<section id="problem-definition">
+<h2>1. Problem Definition<a class="headerlink" href="#problem-definition" title="Link to this heading">¶</a></h2>
+<p>A tools configuration is sometimes limited by the requirement that it can be built from the CLI arguments.
+For example, a tool may want to be configured with a <code class="docutils literal notranslate"><span class="pre">set</span></code> of file paths, but the CLI only supports building <code class="docutils literal notranslate"><span class="pre">list</span></code> types.
+Therefore, there is often a desire to transform a configuration option from one value to another ahead of running the primary flow of the tool.</p>
+<p>A common example of a transformation is reading the contents of a file.
+Many tools will accept a file path as a CLI argument, which is immediately opened, its content read, and then the file is closed on not used again.
+This is a common pattern and can be abstracted into a reusable transformation: <code class="docutils literal notranslate"><span class="pre">file_content(path:</span> <span class="pre">str)</span> <span class="pre">-&gt;</span> <span class="pre">str</span></code>.</p>
+<p>In more complex examples, a particular file format may be expected, and have its own transformation. For example json files can use <code class="docutils literal notranslate"><span class="pre">json_content(path:</span> <span class="pre">str)</span> <span class="pre">-&gt;</span> <span class="pre">dict[str,</span> <span class="pre">Any]</span></code>. Similar transformations can be defined for other file formats, such as CSV, yaml, pickle, etc.</p>
+<section id="a-note-on-defaults-and-choices-etc">
+<h3>A note on defaults and choices etc.<a class="headerlink" href="#a-note-on-defaults-and-choices-etc" title="Link to this heading">¶</a></h3>
+<p>These transformations are limited to operation on the value read from the CLI. When constructing an instance of the dataclass through other mechanisms (such as the constructor provided by <code class="docutils literal notranslate"><span class="pre">dataclasses</span></code>) the transformation is not applied.</p>
+<p>In order to support configuration options whose types match those of the CLI arguments (e.g. choices) the typing of those options must be updated to match the transformation (input) type.
+E.g. a transformation that accepts an <code class="docutils literal notranslate"><span class="pre">int</span></code> and returns a <code class="docutils literal notranslate"><span class="pre">str</span></code> would require the choices to be a list of <code class="docutils literal notranslate"><span class="pre">int</span></code> values, not their string representations.</p>
+<p>For <code class="docutils literal notranslate"><span class="pre">default</span></code> and <code class="docutils literal notranslate"><span class="pre">default_factory</span></code> values this is further complicated by the fact that these values are stored directly in the <code class="docutils literal notranslate"><span class="pre">dataclasses</span></code> field.
+To maintain the typing correctly, the default value must be transformed before being assigned to the field.
+Similarly, the <code class="docutils literal notranslate"><span class="pre">default_factory</span></code> must be stored in the <code class="docutils literal notranslate"><span class="pre">dataclasses</span></code> field as a function that returns the transformed value. I.e. <code class="docutils literal notranslate"><span class="pre">default_factory</span> <span class="pre">=</span> <span class="pre">lambda:</span> <span class="pre">transform(factory())</span></code>.</p>
+<p>Unfortunately, this means that <code class="docutils literal notranslate"><span class="pre">cfgclasses</span></code> will separately have to store the _raw_ <code class="docutils literal notranslate"><span class="pre">default</span></code> value, since the un-transformed value needs to be specified to <code class="docutils literal notranslate"><span class="pre">argparse</span></code>.
+Note however, that a <code class="docutils literal notranslate"><span class="pre">default_factory</span></code> value does not need to stored, as this is not supported by <code class="docutils literal notranslate"><span class="pre">argparse</span></code>, so if <code class="docutils literal notranslate"><span class="pre">default_factory</span></code> is used it can be called and assigned to the <code class="docutils literal notranslate"><span class="pre">default</span></code> value instead.</p>
+</section>
+</section>
+<section id="solution">
+<h2>2. Solution<a class="headerlink" href="#solution" title="Link to this heading">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">cfgclasses</span></code> allows the specification of a transformation function for a particular configuration option.
+The transformation function accepts a single argument or type <code class="docutils literal notranslate"><span class="pre">T</span></code> and returns a value of type <code class="docutils literal notranslate"><span class="pre">U</span></code>.
+The configuration option must also be of type <code class="docutils literal notranslate"><span class="pre">U</span></code>, and type <code class="docutils literal notranslate"><span class="pre">T</span></code> must be type supported by <code class="docutils literal notranslate"><span class="pre">cfgclasses</span></code> arguments (simple types like <code class="docutils literal notranslate"><span class="pre">str</span></code> or <code class="docutils literal notranslate"><span class="pre">int</span></code>; <code class="docutils literal notranslate"><span class="pre">list</span></code> of simple types; or <code class="docutils literal notranslate"><span class="pre">Optional</span></code> of simple types).</p>
+<p>Ideally a transformation function is strongly typed and <code class="docutils literal notranslate"><span class="pre">cfgclasses</span></code> and <code class="docutils literal notranslate"><span class="pre">mypy</span></code> would be capable of inferring the types <code class="docutils literal notranslate"><span class="pre">T</span></code> and <code class="docutils literal notranslate"><span class="pre">U</span></code>.
+However, functions can be permissive with their inputs (e.g. <code class="docutils literal notranslate"><span class="pre">Iterable[str]</span></code>) where <code class="docutils literal notranslate"><span class="pre">cfgclasses</span></code> would require a stricted type (<code class="docutils literal notranslate"><span class="pre">list[str]</span></code>).
+Furthermore, the use of <code class="docutils literal notranslate"><span class="pre">lambda</span></code> functions as transforms or the use of other untyped functions would mean inspecting the transform function for its typing would be difficult.</p>
+<p>Therefore, a type for the input to the transformation must also be specified.</p>
+<section id="class-transformations">
+<h3>Class transformations<a class="headerlink" href="#class-transformations" title="Link to this heading">¶</a></h3>
+<p>In addition to the above, it is also sometimes desirable to transform a group of configuration options into a single instance of another type.</p>
+<p>For example, in the popular example case of specifying the logging level, it is common to have a <code class="docutils literal notranslate"><span class="pre">--debug</span></code> option and the mutually-exclusive <code class="docutils literal notranslate"><span class="pre">--quiet</span></code> option.
+These options can then be used to set the logging level to <code class="docutils literal notranslate"><span class="pre">DEBUG</span></code> or <code class="docutils literal notranslate"><span class="pre">ERROR</span></code> respectively, with the default being <code class="docutils literal notranslate"><span class="pre">INFO</span></code>.
+Without the use of transforms, the config class definition would look like so:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@mutually_exclusive</span>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LoggingConfig</span><span class="p">:</span>
+    <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="s2">&quot;Enable debug logging&quot;</span><span class="p">)</span>
+    <span class="n">quiet</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="s2">&quot;Disable info logging&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_level</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">quiet</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span>
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
+    <span class="n">log_level</span><span class="p">:</span> <span class="n">LoggingConfig</span>
+</pre></div>
+</div>
+<p>While this pattern is sufficient, it does have one major drawback: When manually constructing an instance of <code class="docutils literal notranslate"><span class="pre">Config</span></code>, e.g. during testing, an invalid combination of <code class="docutils literal notranslate"><span class="pre">debug</span></code> and <code class="docutils literal notranslate"><span class="pre">quiet</span></code> can be used.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="n">Config</span><span class="p">(</span><span class="n">LoggingConfig</span><span class="p">(</span><span class="n">debug</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">quiet</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>In this situation, the behavior depends on which of the <code class="docutils literal notranslate"><span class="pre">debug</span></code> or <code class="docutils literal notranslate"><span class="pre">quiet</span></code> modes is checked first in the <code class="docutils literal notranslate"><span class="pre">log_level()</span></code> method.</p>
+<p>With the use of a class transform, this problem can be avoided.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@mutually_exclusive</span>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LoggingConfig</span><span class="p">:</span>
+    <span class="n">debug</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="s2">&quot;Enable debug logging&quot;</span><span class="p">)</span>
+    <span class="n">quiet</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="s2">&quot;Disable info logging&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_level</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">debug</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">quiet</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">logging</span><span class="o">.</span><span class="n">ERROR</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span>
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
+    <span class="n">log_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">cfgtransform</span><span class="p">(</span><span class="n">LoggingConfig</span><span class="p">,</span> <span class="n">LoggingConfig</span><span class="o">.</span><span class="n">log_level</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In this case, the <code class="docutils literal notranslate"><span class="pre">log_level</span></code> configuration option is transformed from a <code class="docutils literal notranslate"><span class="pre">LoggingConfig</span></code> instance to an <code class="docutils literal notranslate"><span class="pre">int</span></code> using the <code class="docutils literal notranslate"><span class="pre">LoggingConfig.log_level</span></code> function used previously.
+While it is still possible to construct invalid instances of <code class="docutils literal notranslate"><span class="pre">LoggingConfig</span></code>, it is no longer possible to construct an invalid instance of <code class="docutils literal notranslate"><span class="pre">Config</span></code> itself.</p>
+<p>Another pattern where these transform are useful is constructing more complex classes from simple dataclass definitions.
+Often a class definition may be out of the programmers control (e.g. part of a third party library) or the required functionality may mean that usage of a dataclass is not possible.
+In these cases, the programmer can define a simple dataclass with options sufficient to then build the more complex class from.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">NotADataClass</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DataClassConfig</span><span class="p">:</span>
+    <span class="n">a</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="s2">&quot;An int&quot;</span><span class="p">)</span>
+    <span class="n">b</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">arg</span><span class="p">(</span><span class="s2">&quot;A string&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_not_a_dataclass</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NotADataClass</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">NotADataClass</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">)</span>
+
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Config</span><span class="p">:</span>
+    <span class="n">not_a_dataclass</span><span class="p">:</span> <span class="n">NotADataClass</span> <span class="o">=</span> <span class="n">cfgtransform</span><span class="p">(</span>
+        <span class="n">DataClassConfig</span><span class="p">,</span>
+        <span class="n">DataClassConfig</span><span class="o">.</span><span class="n">to_not_a_dataclass</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="design-ammendments">
+<h2>3. Design ammendments<a class="headerlink" href="#design-ammendments" title="Link to this heading">¶</a></h2>
+<p>The following changes are made to the design to support transformations:</p>
+<ul class="simple">
+<li><p>The <code class="docutils literal notranslate"><span class="pre">arg()</span></code> and <code class="docutils literal notranslate"><span class="pre">optional()</span></code> functions are updated to accept this transformation function as an optional argument. The typing of the functions is also updated to reflect the use of the transformation.</p></li>
+<li><p>These functions are also updated to accept the transformation type as an argument</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">ConfigOpts</span></code> class is updated to contain transformation function and transformation type members and is made to be Generic over the appropriate types, maintaining the type safety when using the transformations.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">ConfigOpts</span></code> is also used to store the default value as this is now distinct from the value stored in the <code class="docutils literal notranslate"><span class="pre">dataclasses</span></code> field.</p></li>
+<li><p>When building the <code class="docutils literal notranslate"><span class="pre">Specification</span></code> for a <code class="docutils literal notranslate"><span class="pre">dataclass</span></code> the transformation function and type are extracted from the <code class="docutils literal notranslate"><span class="pre">ConfigOpts</span></code> class and stored in the <code class="docutils literal notranslate"><span class="pre">Specification</span></code>.</p>
+<ul>
+<li><p>If not specified, the transformation function is set to the identity function and the transformation type is set to the type of the configuration option.</p></li>
+</ul>
+</li>
+<li><p>To build the <code class="docutils literal notranslate"><span class="pre">dataclass</span></code> from the CLI arguments, instead of directly assigning the value from the <code class="docutils literal notranslate"><span class="pre">argparse.Namespace</span></code> the transformation function is invoked with the value from the <code class="docutils literal notranslate"><span class="pre">argparse.Namespace</span></code>.</p></li>
+</ul>
+<p>For the class transformation, the following changes are made:</p>
+<ul class="simple">
+<li><p>A new <code class="docutils literal notranslate"><span class="pre">cfgtransform()</span></code> function is added which takes a type and a transform function.</p></li>
+<li><p>A new <code class="docutils literal notranslate"><span class="pre">ConfigClassTransform</span></code> type is defined to contain the type and transform function for classes.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">Specification</span></code> is updated to check for this class in the dataclass metadata and store the transform information.</p></li>
+<li><p>When building the <code class="docutils literal notranslate"><span class="pre">dataclass</span></code> from the CLI arguments, the transforms of each of its subspecs are invoked to apply the transformations.</p></li>
+</ul>
+</section>
+<section id="implementation-and-testing">
+<h2>4. Implementation and testing<a class="headerlink" href="#implementation-and-testing" title="Link to this heading">¶</a></h2>
+<p>Type safety is key point to be maintained with this change.
+It would be easy to overlook during implementation and testing with excessive use of the Any type.</p>
+<p>Additional testing is to be implemented to ensure that the type safety is maintained.
+This includes test cases where mypy would fail due to transform functions and types being incompatible.
+This is an unusual testing pattern, but is required to verify and maintain that typing bugs are not introduced through this change or any future additions.</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="../index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Transforms</a><ul>
+<li><a class="reference internal" href="#problem-definition">1. Problem Definition</a><ul>
+<li><a class="reference internal" href="#a-note-on-defaults-and-choices-etc">A note on defaults and choices etc.</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#solution">2. Solution</a><ul>
+<li><a class="reference internal" href="#class-transformations">Class transformations</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#design-ammendments">3. Design ammendments</a></li>
+<li><a class="reference internal" href="#implementation-and-testing">4. Implementation and testing</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="submodes.html"
+                          title="previous chapter">Submodes</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="validators.html"
+                          title="next chapter">Validators</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/designs/transforms.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="validators.html" title="Validators"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="submodes.html" title="Submodes"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">cfgclasses 2.3.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../design.html" >Design</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Transforms</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2023, Olli Johnson.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.1.3.
+    </div>
+  </body>
+</html>
