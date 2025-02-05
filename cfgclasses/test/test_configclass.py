@@ -9,6 +9,8 @@ from cfgclasses import (
     mutually_exclusive,
     parse_args,
     parse_args_with_submodes,
+    parse_known_args,
+    parse_known_args_with_submodes,
     validator,
 )
 
@@ -93,6 +95,49 @@ def test_submodes() -> None:
             ["a", "b", "--anum", "10000", "--bnum", "10000"],
             submodes,
         )
+
+
+def test_unknown_args() -> None:
+    """Test the handling of unknown arguments both with and without submodes."""
+
+    @dataclasses.dataclass
+    class TopLevelConfig:
+        """Top level config class containing the submodes."""
+
+        debug: bool = arg("Enable debug mode")
+
+    # Check the unknown args handling without submodes
+    assert parse_known_args(
+        TopLevelConfig, ["--debug", "--unknown", "arg"]
+    ) == (TopLevelConfig(debug=True), ["--unknown", "arg"])
+
+    @dataclasses.dataclass
+    class SubmodeA:
+        """Config for the submode A."""
+
+        anum: int = arg("A simple integer field")
+
+    @dataclasses.dataclass
+    class SubmodeB:
+        """Config for the submode B."""
+
+        bnum: int = arg("A simple integer field")
+
+    submodes = {
+        "a": SubmodeA,
+        "b": SubmodeB,
+    }
+
+    # Check the same but with submodes enabled
+    assert parse_known_args_with_submodes(
+        TopLevelConfig,
+        ["--debug", "a", "--anum", "10000", "--unknown", "arg"],
+        submodes,
+    ) == (
+        TopLevelConfig(debug=True),
+        SubmodeA(anum=10000),
+        ["--unknown", "arg"],
+    )
 
 
 def test_validation_simple() -> None:

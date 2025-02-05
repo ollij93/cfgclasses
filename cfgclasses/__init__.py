@@ -10,6 +10,11 @@ The primary entrypoint for this module is the ``parse_args()`` function.
 .. autofunction:: cfgclasses.parse_args
 .. autofunction:: cfgclasses.parse_args_with_submodes
 
+Alternative forms that allow for the parsing of unknown arguments are also provided.
+
+.. autofunction:: cfgclasses.parse_known_args
+.. autofunction:: cfgclasses.parse_known_args_with_submodes
+
 Additionally the following functions are provided to simplify the creation of
 the class fields.
 

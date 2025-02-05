@@ -20,7 +20,9 @@ __all__ = (
     "ConfigClass",
     "MutuallyExclusiveConfigClass",
     "parse_args",
+    "parse_known_args",
     "parse_args_with_submodes",
+    "parse_known_args_with_submodes",
     "mutually_exclusive",
 )
 
@@ -46,6 +48,31 @@ def parse_args(
     ret = specification.construct_from_namespace(namespace)
     validate_post_argparse(ret, parser)
     return ret
+
+
+def parse_known_args(
+    cls: Type[_T],
+    argv: Sequence[str],
+    prog: Optional[str] = None,
+) -> tuple[_T, list[str]]:
+    """
+    Parse the known arguments from the input vector into an instance of the given class.
+
+    :param cls: The class to parse the arguments into.
+    :param argv: The arguments vector to parse.
+    :param prog: The name of the program to display in the help message.
+    :rtype: ``tuple[cls, list[str]]``
+    :return:
+        An instance of the given class with the parsed arguments, plus a
+        list of unknown arguments.
+    """
+    parser = argparse.ArgumentParser(prog=prog)
+    specification = Specification.from_class(cls)
+    specification.add_to_parser(parser)
+    namespace, unknown_args = parser.parse_known_args(argv)
+    ret = specification.construct_from_namespace(namespace)
+    validate_post_argparse(ret, parser)
+    return ret, unknown_args
 
 
 def _add_submode_parsers(
@@ -108,6 +135,54 @@ def parse_args_with_submodes(
     validate_post_argparse(toplvlcfg, parser)
     validate_post_argparse(submodecfg, parser)
     return toplvlcfg, submodecfg
+
+
+def parse_known_args_with_submodes(
+    cls: Type[_T],
+    argv: Sequence[str],
+    submodes: dict[str, Type[_U]],
+    prog: Optional[str] = None,
+) -> tuple[_T, _U, list[str]]:
+    """
+    Parse the known arguments from the input vector into an instance of this class and a submode.
+
+    The submode will be one of the provided submodes classes populated with
+    the CLI arguments.
+
+    :param cls: The class to parse the arguments into.
+    :param argv: The arguments vector to parse.
+    :param submodes: Mapping of submode name to submode classes to parse.
+    :param prog: The name of the program to display in the help message.
+    :rtype: ``tuple[cls, submode, list[str]]``
+    :return:
+        A tuple of the top-level config, the submode config and a list of
+        unknown arguments.
+    :raises ValueError: If no submodes are provided.
+    """
+    if not submodes:
+        raise ValueError("Can't parse_args_with_submodes with no submodes")
+
+    parser = argparse.ArgumentParser(prog=prog)
+    spec = Specification.from_class(cls)
+    spec.add_to_parser(parser)
+
+    # mypy doesn't track the dataclass-ness of the submodes dict values properly
+    # so sanity check here and then cast to the correct type (mypy ignore)
+    for submode in submodes.values():
+        if not dataclasses.is_dataclass(submode):
+            raise TypeError(f"{submode} is not a dataclass")
+    submode_specs = _add_submode_parsers(parser, submodes)  # type:ignore
+
+    namespace, unknown_args = parser.parse_known_args(argv)
+    if submodes and not hasattr(namespace, "submode_name"):
+        parser.error("No submode selected")
+
+    selected_submode_spec = submode_specs[namespace.submode_name]
+    toplvlcfg = spec.construct_from_namespace(namespace)
+    submodecfg = selected_submode_spec.construct_from_namespace(namespace)
+    validate_post_argparse(toplvlcfg, parser)
+    validate_post_argparse(submodecfg, parser)
+    return toplvlcfg, submodecfg, unknown_args
 
 
 @dataclasses.dataclass
