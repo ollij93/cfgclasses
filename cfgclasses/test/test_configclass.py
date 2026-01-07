@@ -1,6 +1,7 @@
 """Unit-tests for the configclass module."""
 
 import dataclasses
+from typing import Optional
 
 import pytest
 
@@ -13,6 +14,43 @@ from cfgclasses import (
     parse_known_args_with_submodes,
     validator,
 )
+
+def test_type_handling() -> None:
+    """Test the use of various basic types."""
+    @dataclasses.dataclass
+    class TestConfig:
+        """Config for the type handling tests."""
+
+        anum: int = arg("A simple integer field")
+        afloat: float = arg("A simple float field")
+        astring: str = arg("A simple string field")
+        abool: bool = arg("A simple boolean field")
+        anum_list: list[int] = arg("A simple list of integers field")
+        astring_list: list[str] = arg("A simple list of strings field")
+
+    assert parse_args(TestConfig, [
+        "--anum",
+        "1",
+        "--afloat",
+        "1.0",
+        "--astring",
+        "test",
+        "--abool",
+        "--anum-list",
+        "1",
+        "2",
+        "3",
+        "--astring-list",
+        "test",
+        "test2",
+    ]) == TestConfig(
+        anum=1,
+        afloat=1.0,
+        astring="test",
+        abool=True,
+        anum_list=[1, 2, 3],
+        astring_list=["test", "test2"],
+    )
 
 
 def test_mutually_exclusive() -> None:

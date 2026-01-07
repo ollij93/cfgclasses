@@ -3,6 +3,7 @@
 import abc
 import argparse
 import dataclasses
+import types
 from typing import (
     Any,
     Callable,
@@ -110,10 +111,14 @@ def _default_from_field(field: dataclasses.Field[_T]) -> _T | NotSpecified:
 
 
 def _is_optional_type(metatype: Type[Any]) -> bool:
-    """Check if the given type is an Optional type."""
+    """Check if the given type is an Optional type.
+    
+    Supports both Optional[X] (typing.Union) and X | None (types.UnionType) syntax.
+    """
+    origin = get_origin(metatype)
     type_args = get_args(metatype)
     return (
-        get_origin(metatype) == Union
+        (origin == Union or origin == types.UnionType)
         and len(type_args) == 2
         and type(None) in type_args
     )

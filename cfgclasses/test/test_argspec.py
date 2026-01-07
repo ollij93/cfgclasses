@@ -83,6 +83,32 @@ optionaloptspec = Specification(
 
 
 @dataclasses.dataclass
+class UnionNoneOptCase:
+    """Case with an optional option using X | None syntax."""
+
+    optfield: str | None = optional("An optional string field using union syntax")
+
+
+unionnoneoptspec = Specification(
+    UnionNoneOptCase,
+    members=[
+        OptionalSpecItem(
+            "optfield",
+            help="An optional string field using union syntax",
+            type=str,
+            metavar=None,
+            choices=None,
+            default=None,
+            transform=identity_transform,
+            optnames=[],
+        )
+    ],
+    subspecs={},
+    transform=None,
+)
+
+
+@dataclasses.dataclass
 class ListOptCase:
     """Case with a list option."""
 
@@ -449,6 +475,7 @@ transformsubspec = Specification(
 test_spec_from_class_cases = {
     "SimpleOptCase": (SimpleOptCase, simpleoptspec),
     "OptionalOptCase": (OptionalOptCase, optionaloptspec),
+    "UnionNoneOptCase": (UnionNoneOptCase, unionnoneoptspec),
     "ListOptCase": (ListOptCase, listoptspec),
     "PositionalOptCase": (PositionalOptCase, posoptspec),
     "PositionalAndOptionalCase": (PositionalAndOptionalCase, posplusoptspec),
@@ -580,6 +607,16 @@ test_e2e_parser_cases = {
         optionaloptspec,
         [],
         OptionalOptCase(optfield=None),
+    ),
+    "union_none_specified": (
+        unionnoneoptspec,
+        ["--optfield", "test"],
+        UnionNoneOptCase(optfield="test"),
+    ),
+    "union_none_not_specified": (
+        unionnoneoptspec,
+        [],
+        UnionNoneOptCase(optfield=None),
     ),
     # =========================================================================
     # Positional tests
